@@ -5,7 +5,7 @@
 ## 실행
 
 ```bash
-npm start            # = node server.mjs → http://localhost:8000 (의존성 없음, Node 22+)
+npm run dev          # = node server.mjs → http://localhost:8000 (의존성 없음, Node 22+)
 npm test             # 사진 필터 단위 테스트
 npm run e2e          # 모바일 e2e (서버 실행 중일 때)
 ```
@@ -42,7 +42,7 @@ docs/                 주최 측 질문서 (배포 제외)
 ## 배포 (Vercel)
 
 1. Vercel → Add New Project → GitHub `divisonofficer/Eatpl_Service` Import
-   - Framework Preset: **Other**, Build Command: 비움, Output Directory: 비움(루트)
+   - Framework Preset: **Other** (vercel.json 에 `framework: null` 로 고정 — Node 서버 앱으로 인식되지 않게)
 2. Settings → Environment Variables: `KAKAO_REST_KEY` (사진용, Production/Preview)
 3. 배포 후 도메인(예: `xxx.vercel.app`)을 공모전에 등록 — 순 사용자 집계 기준 호스트
 4. 카카오 디벨로퍼스 → 앱 → 플랫폼(Web)에 배포 도메인 추가 (REST 키는 서버에서만 쓰지만 등록해 두면 안전)
