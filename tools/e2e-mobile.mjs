@@ -114,8 +114,8 @@ await ev(`[...document.querySelectorAll('.cat-tile')].find(b => b.textContent.tr
 await shot("06-filter");
 await ev(`document.getElementById('filterApply').click()`);
 await until(`!document.getElementById('resultCount').textContent.includes('검색 중')`); await sleep(800);
-const fl = await ev(`({ count: document.getElementById('filterCount').textContent, cats: [...new Set([...document.querySelectorAll('.row')].map(r => { const m = r.querySelector('.meta').cloneNode(true); m.querySelectorAll('.tier,.dist').forEach(x => x.remove()); return m.textContent.split('·').map(x => x.trim()).filter(Boolean)[0]; }))] })`);
-check("filter", fl.count === "1" && fl.cats.length === 1 && fl.cats[0] === "치킨", fl);
+const fl = await ev(`({ count: document.getElementById('filterBtn').textContent.trim(), cats: [...new Set([...document.querySelectorAll('.row')].map(r => { const m = r.querySelector('.meta').cloneNode(true); m.querySelectorAll('.tier,.dist').forEach(x => x.remove()); return m.textContent.split('·').map(x => x.trim()).filter(Boolean)[0]; }))] })`);
+check("filter", fl.count === "치킨" && fl.cats.length === 1 && fl.cats[0] === "치킨", fl);
 
 // 9) 현위치
 await load(URL0);

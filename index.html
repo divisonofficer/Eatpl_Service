@@ -16,9 +16,6 @@
     <form class="search" id="filters" role="search">
       <span class="search-ic" id="searchIc"></span>
       <input id="loc" placeholder="동네·역·회사 검색" autocomplete="off" enterkeyhint="search" />
-      <button type="button" id="filterBtn" class="search-btn" aria-label="필터">
-        <span id="filterIc"></span><b id="filterCount" class="count-dot" hidden></b>
-      </button>
     </form>
     <ul id="suggest" class="suggest" role="listbox" hidden></ul>
     <div class="quick" id="quick">
@@ -26,7 +23,10 @@
       <div class="picker" id="sizePicker" role="radiogroup" aria-label="인원"></div>
       <div class="picker" id="dayPicker" role="radiogroup" aria-label="요일"></div>
     </div>
-    <div id="prefRow" class="pref-row quick2" role="group" aria-label="룸·주차·콜키지"></div>
+    <div class="quick2">
+      <button type="button" id="filterBtn" class="cat-btn" aria-label="업종 선택"></button>
+      <div id="prefRow" class="pref-row" role="group" aria-label="룸·주차·콜키지"></div>
+    </div>
   </header>
 
   <button type="button" id="areaBtn" class="area-btn" hidden></button>
@@ -59,7 +59,7 @@
   <!-- 필터 시트 -->
   <dialog id="filterDialog" class="bottom-dialog">
     <div class="bd-head">
-      <strong>필터</strong>
+      <strong>업종 · 팀</strong>
       <button type="button" class="icon-btn" data-close aria-label="닫기"></button>
     </div>
     <div class="bd-section">

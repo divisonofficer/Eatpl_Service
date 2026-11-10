@@ -38,7 +38,6 @@ const inCand = (id) => state.candidates.some((c) => c.id === id);
 
 // 정적 버튼 아이콘
 $("searchIc").innerHTML = svg("search", 20);
-$("filterIc").innerHTML = svg("sliders", 20);
 $("locateBtn").innerHTML = svg("locate", 22);
 document.querySelectorAll("[data-close], #epClose, #inapp .icon-btn").forEach((b) => (b.innerHTML = svg("close", 20)));
 
@@ -249,10 +248,15 @@ function setMode(k) {
 
 // ---------- 필터 시트 ----------
 let pending = null;
+// 업종 버튼 (두 번째 줄 맨 앞): 선택된 업종 요약. 모드 기본값과 다르면 주황.
 function renderFilterCount() {
-  const n = state.categories.size;
-  $("filterCount").hidden = !n;
-  $("filterCount").textContent = n;
+  const sel = ALL_CATEGORIES.filter((c) => state.categories.has(c));
+  const labels = [...new Set(sel.map(catLabel))];
+  const text = !labels.length ? "업종 선택" : labels.length === 1 ? labels[0] : `${labels[0]} 외 ${labels.length - 1}`;
+  const def = MODES[state.mode].categories;
+  const custom = sel.length !== def.length || sel.some((c) => !def.includes(c));
+  $("filterBtn").classList.toggle("custom", custom);
+  $("filterBtn").innerHTML = `${svg("sliders", 15)}<span>${esc(text)}</span>${svg("down", 13)}`;
 }
 function renderCatGrid() {
   $("catGrid").innerHTML = ALL_CATEGORIES.map(
@@ -278,7 +282,7 @@ $("catGrid").addEventListener("click", (e) => {
 // 우선 보기 (메인 화면): 누르면 현재 목록만 다시 정렬 — 재검색·API 호출 없음
 function renderPrefs() {
   $("prefRow").innerHTML = PREFS.map(
-    (p) => `<button type="button" class="pref" data-pref="${p.k}" aria-pressed="${state.prefs.has(p.k)}">${svg(p.icon, 15)}${p.label}</button>`
+    (p) => `<button type="button" class="pref" data-pref="${p.k}" aria-label="${p.label}" aria-pressed="${state.prefs.has(p.k)}">${svg(p.icon, 15)}<span class="pl">${p.label}</span></button>`
   ).join("");
 }
 $("prefRow").addEventListener("click", (e) => {
