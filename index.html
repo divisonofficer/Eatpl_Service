@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>회식픽 — 회식 장소 5분 컷</title>
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="map" aria-label="지도"></div>
+
+  <!-- 상단 플로팅 검색 -->
+  <header id="top">
+    <form class="search" id="filters" role="search">
+      <span class="brand" aria-hidden="true">회식픽</span>
+      <input id="loc" list="locList" placeholder="동네 (예: 서울 종로구)" autocomplete="off" enterkeyhint="search" />
+      <datalist id="locList">
+        <option value="서울 종로구"></option><option value="서울 중구"></option>
+        <option value="서울 강남구 역삼동"></option><option value="서울 영등포구 여의도동"></option>
+        <option value="서울 마포구"></option><option value="서울 강동구"></option>
+      </datalist>
+      <label class="headcount" title="인원">👥<input id="headcount" type="number" min="1" max="99" value="12" inputmode="numeric" /></label>
+      <button type="submit" class="go" aria-label="검색">검색</button>
+    </form>
+    <nav class="scroller tabs" id="modeTabs" role="tablist"></nav>
+    <div class="scroller chips" id="chips"></div>
+  </header>
+
+  <button type="button" id="locateBtn" class="locate" aria-label="내 위치로 검색" title="내 위치 주변 검색">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="currentColor"/><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+
+  <!-- 바텀시트 (데스크톱에서는 좌측 패널) -->
+  <section id="sheet" data-snap="half" aria-label="검색 결과">
+    <div class="sheet-head" id="sheetHead">
+      <div class="handle" aria-hidden="true"></div>
+      <div class="head-row">
+        <div>
+          <div class="head-title"><span id="resultCount">-</span> <span id="statusBadge" class="badge" hidden></span></div>
+          <div class="head-sub">최근 1개월 결제 기준</div>
+        </div>
+        <button id="candBtn" class="cand-btn" disabled>후보 <b id="candCount">0</b>/3 · 안내문</button>
+      </div>
+    </div>
+    <ol id="results"></ol>
+  </section>
+
+  <!-- 안내문 다이얼로그 -->
+  <dialog id="msgDialog">
+    <form method="dialog" class="dlg">
+      <div class="dlg-head">
+        <strong>단톡방 안내문</strong>
+        <button class="x" value="close" aria-label="닫기">✕</button>
+      </div>
+      <ul id="candList"></ul>
+      <div class="tone" role="radiogroup">
+        <label><input type="radio" name="tone" value="formal" checked /> 격식</label>
+        <label><input type="radio" name="tone" value="casual" /> 캐주얼</label>
+      </div>
+      <textarea id="message" readonly rows="9"></textarea>
+      <div class="dlg-actions">
+        <button type="button" id="shareBtn" class="primary">공유하기</button>
+        <button type="button" id="copyBtn" class="secondary">문구 복사</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 잇플 상세 (merUrl 원본 그대로 iframe. 새 창 링크도 항상 제공) -->
+  <dialog id="eatplDialog" class="eatpl">
+    <div class="ep-head">
+      <div class="ep-title"><span class="ep-logo">eat.pl 잇플</span><strong id="epTitle"></strong></div>
+      <a id="epOpen" class="ep-open" target="_blank" rel="noopener">새 창 ↗</a>
+      <button type="button" id="epClose" class="x" aria-label="닫기">✕</button>
+    </div>
+    <div class="ep-body">
+      <div id="epLoading" class="ep-loading">불러오는 중…</div>
+      <iframe id="epFrame" title="잇플 상세" referrerpolicy="strict-origin-when-cross-origin"
+        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
+    </div>
+  </dialog>
+
+  <!-- 카카오톡 인앱 브라우저 안내 -->
+  <div id="inapp" class="inapp" hidden>
+    <a id="inappOpen" href="#">기본 브라우저로 열기</a>
+    <button type="button" class="x" aria-label="닫기" onclick="this.parentElement.hidden=true">✕</button>
+  </div>
+
+  <div id="toast" hidden></div>
+
+  <script src="vendor/proj4.js"></script>
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

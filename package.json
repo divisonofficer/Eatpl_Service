@@ -1,0 +1,14 @@
+{
+  "name": "hoesikpick-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "gen:mock": "node tools/gen-mock.mjs",
+    "test": "node --test test/",
+    "e2e": "node tools/e2e-mobile.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

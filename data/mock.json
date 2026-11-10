@@ -1,0 +1,1495 @@
+{
+  "rspCode": "00000",
+  "rspMessage": "Success",
+  "_mock": {
+    "note": "모의 데이터 — API 정의서 v1 스키마, 매장명 가상",
+    "baseDt": "2026-10-01"
+  },
+  "data": [
+    {
+      "merNm": "숯불명가 화로정",
+      "merAddr": "서울 영등포구 국제금융로 124 ,1층 (여의도동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "고기구이",
+      "allSaleRnk": 23.96,
+      "ccgSaleRnk": 7.34,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1552",
+      "endTime": "2348",
+      "frnrVsitYn": true,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "일"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "40대여성",
+        "rk02": "30대여성",
+        "rk03": "30대남성"
+      },
+      "xaxsVal": "305729",
+      "yaxsVal": "547054",
+      "_tpbuzL": "갈비전문점",
+      "_keywords": [
+        "회식"
+      ]
+    },
+    {
+      "merNm": "참숯한우 은행나무",
+      "merAddr": "서울 종로구 인사동길 171 ,1층 (관철동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "고기구이",
+      "allSaleRnk": 0.14,
+      "ccgSaleRnk": 0.03,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1552",
+      "endTime": "2348",
+      "frnrVsitYn": true,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "일"
+      ],
+      "congestionDwk": "수",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "30대여성",
+        "rk02": "50대여성",
+        "rk03": "40대남성"
+      },
+      "xaxsVal": "310426",
+      "yaxsVal": "552910",
+      "_tpbuzL": "갈비전문점",
+      "_keywords": [
+        "회식"
+      ]
+    },
+    {
+      "merNm": "돼지굽는마을",
+      "merAddr": "서울 강남구 역삼로 101 ,1층 (논현동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "고기구이",
+      "allSaleRnk": 19.04,
+      "ccgSaleRnk": 2.96,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1104",
+      "endTime": "2251",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "월"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "오후",
+      "vistCstmrRnkList": {
+        "rk01": "40대여성",
+        "rk02": "50대남성",
+        "rk03": "40대남성"
+      },
+      "xaxsVal": "315514",
+      "yaxsVal": "544609",
+      "_tpbuzL": "갈비전문점",
+      "_keywords": [
+        "회식"
+      ]
+    },
+    {
+      "merNm": "소금구이 삼대",
+      "merAddr": "서울 마포구 와우산로 113 ,1층 (상수동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "고기구이",
+      "allSaleRnk": 11.35,
+      "ccgSaleRnk": 4.73,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1552",
+      "endTime": "2348",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "월"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "오후",
+      "vistCstmrRnkList": {
+        "rk01": "50대여성",
+        "rk02": "50대남성",
+        "rk03": "40대여성"
+      },
+      "xaxsVal": "304374",
+      "yaxsVal": "550741",
+      "_tpbuzL": "갈비전문점",
+      "_keywords": [
+        "회식"
+      ]
+    },
+    {
+      "merNm": "갈비명장 청기와",
+      "merAddr": "서울 중구 충무로 181 ,1층 (을지로4가)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "고기구이",
+      "allSaleRnk": 0.21,
+      "ccgSaleRnk": 0.06,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1104",
+      "endTime": "2251",
+      "frnrVsitYn": true,
+      "empyVsitYn": false,
+      "hldyDwk": [],
+      "congestionDwk": "목",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "40대여성",
+        "rk02": "30대여성",
+        "rk03": "50대남성"
+      },
+      "xaxsVal": "310765",
+      "yaxsVal": "551616",
+      "_tpbuzL": "갈비전문점",
+      "_keywords": []
+    },
+    {
+      "merNm": "한우곳간",
+      "merAddr": "서울 영등포구 여의나루로 191 ,1층 (여의도동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "고기구이",
+      "allSaleRnk": 63.75,
+      "ccgSaleRnk": 17.59,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1552",
+      "endTime": "2348",
+      "frnrVsitYn": true,
+      "empyVsitYn": false,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "오후",
+      "vistCstmrRnkList": {
+        "rk01": "30대여성",
+        "rk02": "30대남성",
+        "rk03": "40대남성"
+      },
+      "xaxsVal": "304800",
+      "yaxsVal": "546703",
+      "_tpbuzL": "갈비전문점",
+      "_keywords": []
+    },
+    {
+      "merNm": "양갈비 초원",
+      "merAddr": "서울 종로구 종로 76 ,1층 (인사동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "고기구이",
+      "allSaleRnk": 40.59,
+      "ccgSaleRnk": 7.41,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1104",
+      "endTime": "2251",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "30대남성",
+        "rk02": "50대남성",
+        "rk03": "30대여성"
+      },
+      "xaxsVal": "310963",
+      "yaxsVal": "552398",
+      "_tpbuzL": "갈비전문점",
+      "_keywords": [
+        "회식"
+      ]
+    },
+    {
+      "merNm": "목살연구소",
+      "merAddr": "서울 강남구 역삼로 14 ,1층 (역삼동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "고기구이",
+      "allSaleRnk": 21.64,
+      "ccgSaleRnk": 3.16,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1104",
+      "endTime": "2251",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "월"
+      ],
+      "congestionDwk": "토",
+      "congestionTizn": "오후",
+      "vistCstmrRnkList": {
+        "rk01": "40대여성",
+        "rk02": "50대남성",
+        "rk03": "20대여성"
+      },
+      "xaxsVal": "314774",
+      "yaxsVal": "545256",
+      "_tpbuzL": "갈비전문점",
+      "_keywords": [
+        "회식"
+      ]
+    },
+    {
+      "merNm": "막창골목 대구집",
+      "merAddr": "서울 마포구 양화로 88 ,1층 (상수동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "곱창전골/구이",
+      "allSaleRnk": 15.47,
+      "ccgSaleRnk": 2.21,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1612",
+      "endTime": "0042",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "심야",
+      "vistCstmrRnkList": {
+        "rk01": "20대여성",
+        "rk02": "50대여성",
+        "rk03": "20대남성"
+      },
+      "xaxsVal": "305576",
+      "yaxsVal": "550097",
+      "_tpbuzL": "일반한식",
+      "_keywords": [
+        "회식",
+        "퇴근후한잔",
+        "심야"
+      ]
+    },
+    {
+      "merNm": "곱창이야기",
+      "merAddr": "서울 중구 다동길 90 ,1층 (다동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "곱창전골/구이",
+      "allSaleRnk": 49.02,
+      "ccgSaleRnk": 18,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1612",
+      "endTime": "0042",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [
+        "월"
+      ],
+      "congestionDwk": "목",
+      "congestionTizn": "심야",
+      "vistCstmrRnkList": {
+        "rk01": "30대남성",
+        "rk02": "50대여성",
+        "rk03": "20대남성"
+      },
+      "xaxsVal": "310617",
+      "yaxsVal": "551939",
+      "_tpbuzL": "일반한식",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야"
+      ]
+    },
+    {
+      "merNm": "황소곱창",
+      "merAddr": "서울 영등포구 여의나루로 44 ,1층 (여의도동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "곱창전골/구이",
+      "allSaleRnk": 11.67,
+      "ccgSaleRnk": 4.97,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1612",
+      "endTime": "0042",
+      "frnrVsitYn": true,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "토",
+        "일"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "40대여성",
+        "rk02": "50대여성",
+        "rk03": "20대남성"
+      },
+      "xaxsVal": "304948",
+      "yaxsVal": "547007",
+      "_tpbuzL": "일반한식",
+      "_keywords": [
+        "회식",
+        "퇴근후한잔",
+        "심야"
+      ]
+    },
+    {
+      "merNm": "김치찌개 장인",
+      "merAddr": "서울 종로구 인사동길 39 ,1층 (관철동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "찜/탕/찌개",
+      "allSaleRnk": 99,
+      "ccgSaleRnk": 36.65,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1047",
+      "endTime": "2132",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "토",
+        "일"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "점심",
+      "vistCstmrRnkList": {
+        "rk01": "30대남성",
+        "rk02": "60대이상남성",
+        "rk03": "30대여성"
+      },
+      "xaxsVal": "311729",
+      "yaxsVal": "553015",
+      "_tpbuzL": "일반한식",
+      "_keywords": [
+        "동네",
+        "회식"
+      ]
+    },
+    {
+      "merNm": "갈비찜 온담",
+      "merAddr": "서울 강남구 논현로 37 ,1층 (역삼동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "찜/탕/찌개",
+      "allSaleRnk": 99,
+      "ccgSaleRnk": 31.34,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1047",
+      "endTime": "2132",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [
+        "월"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "60대이상남성",
+        "rk02": "20대여성",
+        "rk03": "20대남성"
+      },
+      "xaxsVal": "314922",
+      "yaxsVal": "545080",
+      "_tpbuzL": "일반한식",
+      "_keywords": [
+        "동네"
+      ]
+    },
+    {
+      "merNm": "부대찌개 미군부대",
+      "merAddr": "서울 마포구 와우산로 197 ,1층 (서교동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "찜/탕/찌개",
+      "allSaleRnk": 9.26,
+      "ccgSaleRnk": 1.35,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1112",
+      "endTime": "2205",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [
+        "일"
+      ],
+      "congestionDwk": "수",
+      "congestionTizn": "오후",
+      "vistCstmrRnkList": {
+        "rk01": "20대여성",
+        "rk02": "20대남성",
+        "rk03": "30대남성"
+      },
+      "xaxsVal": "305541",
+      "yaxsVal": "550865",
+      "_tpbuzL": "일반한식",
+      "_keywords": [
+        "동네"
+      ]
+    },
+    {
+      "merNm": "감자탕 원조집",
+      "merAddr": "서울 중구 충무로 56 ,1층 (명동2가)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "찜/탕/찌개",
+      "allSaleRnk": 99,
+      "ccgSaleRnk": 29.18,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1047",
+      "endTime": "2132",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [
+        "토",
+        "일"
+      ],
+      "congestionDwk": "목",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "40대여성",
+        "rk02": "30대여성",
+        "rk03": "40대남성"
+      },
+      "xaxsVal": "310731",
+      "yaxsVal": "551799",
+      "_tpbuzL": "일반한식",
+      "_keywords": [
+        "동네"
+      ]
+    },
+    {
+      "merNm": "한옥밥상 다온",
+      "merAddr": "서울 영등포구 국제금융로 96 ,1층 (여의도동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "한정식",
+      "allSaleRnk": 99,
+      "ccgSaleRnk": 38.55,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1121",
+      "endTime": "2140",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "일"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "20대여성",
+        "rk02": "40대남성",
+        "rk03": "50대남성"
+      },
+      "xaxsVal": "305698",
+      "yaxsVal": "547333",
+      "_tpbuzL": "한정식",
+      "_keywords": [
+        "회식",
+        "가족외식"
+      ]
+    },
+    {
+      "merNm": "종가집 수라",
+      "merAddr": "서울 종로구 돈화문로 18 ,1층 (인사동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "한정식",
+      "allSaleRnk": 15.97,
+      "ccgSaleRnk": 4.14,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1121",
+      "endTime": "2140",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "점심",
+      "vistCstmrRnkList": {
+        "rk01": "50대남성",
+        "rk02": "40대여성",
+        "rk03": "60대이상남성"
+      },
+      "xaxsVal": "311187",
+      "yaxsVal": "552131",
+      "_tpbuzL": "한정식",
+      "_keywords": [
+        "가족외식"
+      ]
+    },
+    {
+      "merNm": "보리굴비 서촌댁",
+      "merAddr": "서울 강남구 논현로 184 ,1층 (역삼동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "한정식",
+      "allSaleRnk": 0.09,
+      "ccgSaleRnk": 0.03,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1121",
+      "endTime": "2140",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "월"
+      ],
+      "congestionDwk": "토",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "50대여성",
+        "rk02": "50대남성",
+        "rk03": "40대여성"
+      },
+      "xaxsVal": "315044",
+      "yaxsVal": "545216",
+      "_tpbuzL": "한정식",
+      "_keywords": [
+        "회식",
+        "가족외식"
+      ]
+    },
+    {
+      "merNm": "궁중한상 가온",
+      "merAddr": "서울 마포구 독막로 106 ,1층 (합정동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "한정식",
+      "allSaleRnk": 56.2,
+      "ccgSaleRnk": 11.56,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1121",
+      "endTime": "2140",
+      "frnrVsitYn": true,
+      "empyVsitYn": false,
+      "hldyDwk": [],
+      "congestionDwk": "목",
+      "congestionTizn": "점심",
+      "vistCstmrRnkList": {
+        "rk01": "20대남성",
+        "rk02": "60대이상남성",
+        "rk03": "20대여성"
+      },
+      "xaxsVal": "304332",
+      "yaxsVal": "550892",
+      "_tpbuzL": "한정식",
+      "_keywords": [
+        "가족외식"
+      ]
+    },
+    {
+      "merNm": "홍매반점",
+      "merAddr": "서울 중구 충무로 194 ,1층 (을지로3가)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "중국음식",
+      "allSaleRnk": 0.16,
+      "ccgSaleRnk": 0.06,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1126",
+      "endTime": "2128",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [
+        "월"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "오후",
+      "vistCstmrRnkList": {
+        "rk01": "30대여성",
+        "rk02": "20대남성",
+        "rk03": "40대남성"
+      },
+      "xaxsVal": "310910",
+      "yaxsVal": "552047",
+      "_tpbuzL": "중국음식",
+      "_keywords": []
+    },
+    {
+      "merNm": "만리향 코스요리",
+      "merAddr": "서울 영등포구 여의나루로 109 ,1층 (여의도동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "중국음식",
+      "allSaleRnk": 99,
+      "ccgSaleRnk": 20.15,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1058",
+      "endTime": "2147",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [
+        "월"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "오후",
+      "vistCstmrRnkList": {
+        "rk01": "60대이상남성",
+        "rk02": "40대남성",
+        "rk03": "30대남성"
+      },
+      "xaxsVal": "305165",
+      "yaxsVal": "547514",
+      "_tpbuzL": "중국음식",
+      "_keywords": []
+    },
+    {
+      "merNm": "취영루 신관",
+      "merAddr": "서울 종로구 돈화문로 179 ,1층 (종로3가)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "중국음식",
+      "allSaleRnk": 0.52,
+      "ccgSaleRnk": 0.09,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1126",
+      "endTime": "2128",
+      "frnrVsitYn": true,
+      "empyVsitYn": true,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "20대여성",
+        "rk02": "30대남성",
+        "rk03": "20대남성"
+      },
+      "xaxsVal": "311468",
+      "yaxsVal": "552844",
+      "_tpbuzL": "중국음식",
+      "_keywords": [
+        "회식"
+      ]
+    },
+    {
+      "merNm": "금룡각",
+      "merAddr": "서울 강남구 역삼로 109 ,1층 (역삼동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "중국음식",
+      "allSaleRnk": 24.94,
+      "ccgSaleRnk": 3.15,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1058",
+      "endTime": "2147",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [
+        "일"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "점심",
+      "vistCstmrRnkList": {
+        "rk01": "20대남성",
+        "rk02": "20대여성",
+        "rk03": "30대남성"
+      },
+      "xaxsVal": "315102",
+      "yaxsVal": "544370",
+      "_tpbuzL": "중국음식",
+      "_keywords": []
+    },
+    {
+      "merNm": "양꼬치 하얼빈",
+      "merAddr": "서울 마포구 와우산로 170 ,1층 (합정동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "양꼬치",
+      "allSaleRnk": 90.96,
+      "ccgSaleRnk": 22.91,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1638",
+      "endTime": "0115",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "심야",
+      "vistCstmrRnkList": {
+        "rk01": "50대남성",
+        "rk02": "60대이상남성",
+        "rk03": "40대여성"
+      },
+      "xaxsVal": "304249",
+      "yaxsVal": "550606",
+      "_tpbuzL": "중국음식",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야",
+        "회식"
+      ]
+    },
+    {
+      "merNm": "스시 하루",
+      "merAddr": "서울 중구 을지로 17 ,1층 (을지로4가)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "스시/초밥",
+      "allSaleRnk": 22.67,
+      "ccgSaleRnk": 3.6,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1134",
+      "endTime": "2152",
+      "frnrVsitYn": true,
+      "empyVsitYn": true,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "30대남성",
+        "rk02": "40대여성",
+        "rk03": "20대남성"
+      },
+      "xaxsVal": "310939",
+      "yaxsVal": "551401",
+      "_tpbuzL": "일식회집",
+      "_keywords": [
+        "회식"
+      ]
+    },
+    {
+      "merNm": "참치명가 오도로",
+      "merAddr": "서울 영등포구 여의대로 60 ,1층 (여의도동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "스시/초밥",
+      "allSaleRnk": 71.36,
+      "ccgSaleRnk": 35.57,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1134",
+      "endTime": "2152",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [
+        "토",
+        "일"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "50대여성",
+        "rk02": "30대여성",
+        "rk03": "30대남성"
+      },
+      "xaxsVal": "305742",
+      "yaxsVal": "546825",
+      "_tpbuzL": "일식회집",
+      "_keywords": []
+    },
+    {
+      "merNm": "오마카세 류",
+      "merAddr": "서울 종로구 인사동길 195 ,1층 (종로4가)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "스시/초밥",
+      "allSaleRnk": 99,
+      "ccgSaleRnk": 38.75,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1134",
+      "endTime": "2152",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [],
+      "congestionDwk": "목",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "40대여성",
+        "rk02": "40대남성",
+        "rk03": "30대여성"
+      },
+      "xaxsVal": "310466",
+      "yaxsVal": "551835",
+      "_tpbuzL": "일식회집",
+      "_keywords": []
+    },
+    {
+      "merNm": "대게나라 포구",
+      "merAddr": "서울 강남구 논현로 39 ,1층 (논현동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "해산물구이/찜",
+      "allSaleRnk": 37.64,
+      "ccgSaleRnk": 18.12,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1458",
+      "endTime": "2341",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "점심",
+      "vistCstmrRnkList": {
+        "rk01": "20대남성",
+        "rk02": "30대남성",
+        "rk03": "30대여성"
+      },
+      "xaxsVal": "315262",
+      "yaxsVal": "544306",
+      "_tpbuzL": "일식회집",
+      "_keywords": [
+        "심야"
+      ]
+    },
+    {
+      "merNm": "조개구이 섬마을",
+      "merAddr": "서울 마포구 와우산로 52 ,1층 (서교동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "해산물구이/찜",
+      "allSaleRnk": 19.84,
+      "ccgSaleRnk": 6.2,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1458",
+      "endTime": "2341",
+      "frnrVsitYn": true,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "월"
+      ],
+      "congestionDwk": "토",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "20대남성",
+        "rk02": "20대여성",
+        "rk03": "30대남성"
+      },
+      "xaxsVal": "305362",
+      "yaxsVal": "551098",
+      "_tpbuzL": "일식회집",
+      "_keywords": [
+        "회식",
+        "심야"
+      ]
+    },
+    {
+      "merNm": "민어전문 목포댁",
+      "merAddr": "서울 중구 다동길 52 ,1층 (을지로3가)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "해산물구이/찜",
+      "allSaleRnk": 3.67,
+      "ccgSaleRnk": 1.65,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1458",
+      "endTime": "2341",
+      "frnrVsitYn": true,
+      "empyVsitYn": true,
+      "hldyDwk": [],
+      "congestionDwk": "수",
+      "congestionTizn": "점심",
+      "vistCstmrRnkList": {
+        "rk01": "50대남성",
+        "rk02": "50대여성",
+        "rk03": "30대남성"
+      },
+      "xaxsVal": "311343",
+      "yaxsVal": "551886",
+      "_tpbuzL": "일식회집",
+      "_keywords": [
+        "회식",
+        "심야"
+      ]
+    },
+    {
+      "merNm": "노가리골목집",
+      "merAddr": "서울 영등포구 여의대로 132 ,1층 (여의도동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "주점",
+      "allSaleRnk": 11.33,
+      "ccgSaleRnk": 1.52,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1748",
+      "endTime": "0057",
+      "frnrVsitYn": true,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "토",
+        "일"
+      ],
+      "congestionDwk": "토",
+      "congestionTizn": "심야",
+      "vistCstmrRnkList": {
+        "rk01": "50대여성",
+        "rk02": "50대남성",
+        "rk03": "40대여성"
+      },
+      "xaxsVal": "305172",
+      "yaxsVal": "547717",
+      "_tpbuzL": "주점",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야",
+        "회식"
+      ]
+    },
+    {
+      "merNm": "막걸리 주막 달빛",
+      "merAddr": "서울 종로구 돈화문로 192 ,1층 (인사동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "주점",
+      "allSaleRnk": 62.2,
+      "ccgSaleRnk": 9.59,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1655",
+      "endTime": "0148",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [],
+      "congestionDwk": "수",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "30대남성",
+        "rk02": "50대여성",
+        "rk03": "40대여성"
+      },
+      "xaxsVal": "311163",
+      "yaxsVal": "552375",
+      "_tpbuzL": "주점",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야",
+        "회식"
+      ]
+    },
+    {
+      "merNm": "포차 반딧불",
+      "merAddr": "서울 강남구 테헤란로 60 ,1층 (역삼동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "주점",
+      "allSaleRnk": 99,
+      "ccgSaleRnk": 29.95,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1748",
+      "endTime": "0057",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "심야",
+      "vistCstmrRnkList": {
+        "rk01": "50대여성",
+        "rk02": "50대남성",
+        "rk03": "20대여성"
+      },
+      "xaxsVal": "314961",
+      "yaxsVal": "544547",
+      "_tpbuzL": "주점",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야"
+      ]
+    },
+    {
+      "merNm": "전집 비오는날",
+      "merAddr": "서울 마포구 독막로 170 ,1층 (상수동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "주점",
+      "allSaleRnk": 0.09,
+      "ccgSaleRnk": 0.02,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1748",
+      "endTime": "0057",
+      "frnrVsitYn": true,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "일"
+      ],
+      "congestionDwk": "수",
+      "congestionTizn": "심야",
+      "vistCstmrRnkList": {
+        "rk01": "40대남성",
+        "rk02": "50대남성",
+        "rk03": "20대남성"
+      },
+      "xaxsVal": "304545",
+      "yaxsVal": "550889",
+      "_tpbuzL": "주점",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야",
+        "회식"
+      ]
+    },
+    {
+      "merNm": "이자카야 유메",
+      "merAddr": "서울 중구 을지로 64 ,1층 (을지로4가)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "주점",
+      "allSaleRnk": 19.83,
+      "ccgSaleRnk": 3.89,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1748",
+      "endTime": "0057",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "심야",
+      "vistCstmrRnkList": {
+        "rk01": "30대여성",
+        "rk02": "40대남성",
+        "rk03": "50대남성"
+      },
+      "xaxsVal": "311460",
+      "yaxsVal": "551775",
+      "_tpbuzL": "주점",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야"
+      ]
+    },
+    {
+      "merNm": "수제맥주 브루하우스",
+      "merAddr": "서울 영등포구 여의나루로 32 ,1층 (여의도동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "주점",
+      "allSaleRnk": 9.06,
+      "ccgSaleRnk": 3.62,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1748",
+      "endTime": "0057",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [],
+      "congestionDwk": "토",
+      "congestionTizn": "심야",
+      "vistCstmrRnkList": {
+        "rk01": "20대여성",
+        "rk02": "30대여성",
+        "rk03": "60대이상남성"
+      },
+      "xaxsVal": "305711",
+      "yaxsVal": "547139",
+      "_tpbuzL": "주점",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야",
+        "회식"
+      ]
+    },
+    {
+      "merNm": "바 블루아워",
+      "merAddr": "서울 종로구 돈화문로 119 ,1층 (인사동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "칵테일바",
+      "allSaleRnk": 53.87,
+      "ccgSaleRnk": 14.33,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1903",
+      "endTime": "0152",
+      "frnrVsitYn": true,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "일"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "심야",
+      "vistCstmrRnkList": {
+        "rk01": "40대남성",
+        "rk02": "30대여성",
+        "rk03": "40대여성"
+      },
+      "xaxsVal": "310499",
+      "yaxsVal": "552135",
+      "_tpbuzL": "칵테일바",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야",
+        "회식"
+      ]
+    },
+    {
+      "merNm": "스피크이지 문",
+      "merAddr": "서울 강남구 논현로 23 ,1층 (논현동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "칵테일바",
+      "allSaleRnk": 27.64,
+      "ccgSaleRnk": 3.58,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1903",
+      "endTime": "0152",
+      "frnrVsitYn": true,
+      "empyVsitYn": false,
+      "hldyDwk": [
+        "일"
+      ],
+      "congestionDwk": "금",
+      "congestionTizn": "심야",
+      "vistCstmrRnkList": {
+        "rk01": "20대남성",
+        "rk02": "20대여성",
+        "rk03": "60대이상남성"
+      },
+      "xaxsVal": "314523",
+      "yaxsVal": "544128",
+      "_tpbuzL": "칵테일바",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야"
+      ]
+    },
+    {
+      "merNm": "하이볼 라운지 휘슬",
+      "merAddr": "서울 마포구 양화로 71 ,1층 (합정동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "칵테일바",
+      "allSaleRnk": 46.55,
+      "ccgSaleRnk": 23.05,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1812",
+      "endTime": "0108",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "심야",
+      "vistCstmrRnkList": {
+        "rk01": "50대남성",
+        "rk02": "40대여성",
+        "rk03": "30대여성"
+      },
+      "xaxsVal": "305451",
+      "yaxsVal": "550169",
+      "_tpbuzL": "칵테일바",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야"
+      ]
+    },
+    {
+      "merNm": "바삭치킨 본점",
+      "merAddr": "서울 중구 을지로 115 ,1층 (다동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "치킨",
+      "allSaleRnk": 38.96,
+      "ccgSaleRnk": 13.22,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1501",
+      "endTime": "0048",
+      "frnrVsitYn": true,
+      "empyVsitYn": false,
+      "hldyDwk": [
+        "토",
+        "일"
+      ],
+      "congestionDwk": "수",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "20대여성",
+        "rk02": "20대남성",
+        "rk03": "50대여성"
+      },
+      "xaxsVal": "310812",
+      "yaxsVal": "551890",
+      "_tpbuzL": "스넥",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야"
+      ]
+    },
+    {
+      "merNm": "옛날통닭 장터",
+      "merAddr": "서울 영등포구 국제금융로 10 ,1층 (여의도동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "치킨",
+      "allSaleRnk": 7.58,
+      "ccgSaleRnk": 1.56,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1546",
+      "endTime": "0124",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [],
+      "congestionDwk": "수",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "40대여성",
+        "rk02": "40대남성",
+        "rk03": "30대여성"
+      },
+      "xaxsVal": "305490",
+      "yaxsVal": "547096",
+      "_tpbuzL": "스넥",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야",
+        "회식"
+      ]
+    },
+    {
+      "merNm": "치맥하우스",
+      "merAddr": "서울 종로구 인사동길 149 ,1층 (종로4가)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "치킨",
+      "allSaleRnk": 20.14,
+      "ccgSaleRnk": 3.66,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1501",
+      "endTime": "0048",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "토",
+        "일"
+      ],
+      "congestionDwk": "수",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "30대남성",
+        "rk02": "30대여성",
+        "rk03": "60대이상남성"
+      },
+      "xaxsVal": "310748",
+      "yaxsVal": "552232",
+      "_tpbuzL": "스넥",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야",
+        "회식"
+      ]
+    },
+    {
+      "merNm": "순살공방",
+      "merAddr": "서울 강남구 테헤란로 96 ,1층 (논현동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "치킨",
+      "allSaleRnk": 99,
+      "ccgSaleRnk": 29.17,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1501",
+      "endTime": "0048",
+      "frnrVsitYn": true,
+      "empyVsitYn": true,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "40대여성",
+        "rk02": "30대여성",
+        "rk03": "30대남성"
+      },
+      "xaxsVal": "315074",
+      "yaxsVal": "544757",
+      "_tpbuzL": "스넥",
+      "_keywords": [
+        "퇴근후한잔",
+        "심야",
+        "회식"
+      ]
+    },
+    {
+      "merNm": "김밥천하",
+      "merAddr": "서울 마포구 양화로 112 ,1층 (서교동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "분식",
+      "allSaleRnk": 4.36,
+      "ccgSaleRnk": 1.48,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "0712",
+      "endTime": "2213",
+      "frnrVsitYn": true,
+      "empyVsitYn": false,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "60대이상남성",
+        "rk02": "20대남성",
+        "rk03": "30대남성"
+      },
+      "xaxsVal": "305575",
+      "yaxsVal": "550164",
+      "_tpbuzL": "스넥",
+      "_keywords": [
+        "심야",
+        "24시간운영"
+      ]
+    },
+    {
+      "merNm": "라면공방 심야점",
+      "merAddr": "서울 중구 을지로 190 ,1층 (다동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "분식",
+      "allSaleRnk": 8.52,
+      "ccgSaleRnk": 3.21,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "0000",
+      "endTime": "2359",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [],
+      "congestionDwk": "목",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "40대남성",
+        "rk02": "30대남성",
+        "rk03": "30대여성"
+      },
+      "xaxsVal": "311188",
+      "yaxsVal": "551771",
+      "_tpbuzL": "스넥",
+      "_keywords": [
+        "심야",
+        "24시간운영"
+      ]
+    },
+    {
+      "merNm": "떡볶이연구소",
+      "merAddr": "서울 영등포구 여의나루로 103 ,1층 (여의도동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "떡볶이전문점",
+      "allSaleRnk": 24.13,
+      "ccgSaleRnk": 9.38,
+      "loclPrsnPpltYn": true,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1031",
+      "endTime": "2302",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "오후",
+      "vistCstmrRnkList": {
+        "rk01": "50대여성",
+        "rk02": "40대남성",
+        "rk03": "30대여성"
+      },
+      "xaxsVal": "305068",
+      "yaxsVal": "546932",
+      "_tpbuzL": "스넥",
+      "_keywords": [
+        "심야"
+      ]
+    },
+    {
+      "merNm": "장충왕족발",
+      "merAddr": "서울 종로구 돈화문로 68 ,1층 (인사동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "족발/보쌈",
+      "allSaleRnk": 52.04,
+      "ccgSaleRnk": 22.08,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1557",
+      "endTime": "0106",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [
+        "일"
+      ],
+      "congestionDwk": "수",
+      "congestionTizn": "심야",
+      "vistCstmrRnkList": {
+        "rk01": "50대남성",
+        "rk02": "40대여성",
+        "rk03": "20대남성"
+      },
+      "xaxsVal": "311373",
+      "yaxsVal": "552273",
+      "_tpbuzL": "일반한식",
+      "_keywords": [
+        "회식",
+        "심야"
+      ]
+    },
+    {
+      "merNm": "원조보쌈 할매집",
+      "merAddr": "서울 강남구 논현로 94 ,1층 (역삼동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "족발/보쌈",
+      "allSaleRnk": 62.89,
+      "ccgSaleRnk": 19.34,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1557",
+      "endTime": "0106",
+      "frnrVsitYn": false,
+      "empyVsitYn": false,
+      "hldyDwk": [
+        "토",
+        "일"
+      ],
+      "congestionDwk": "수",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "20대남성",
+        "rk02": "30대여성",
+        "rk03": "20대여성"
+      },
+      "xaxsVal": "315259",
+      "yaxsVal": "544673",
+      "_tpbuzL": "일반한식",
+      "_keywords": [
+        "심야"
+      ]
+    },
+    {
+      "merNm": "불족발 야시장",
+      "merAddr": "서울 마포구 양화로 158 ,1층 (서교동)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "족발/보쌈",
+      "allSaleRnk": 0.57,
+      "ccgSaleRnk": 0.22,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1557",
+      "endTime": "0106",
+      "frnrVsitYn": true,
+      "empyVsitYn": false,
+      "hldyDwk": [
+        "일"
+      ],
+      "congestionDwk": "토",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "20대여성",
+        "rk02": "30대여성",
+        "rk03": "30대남성"
+      },
+      "xaxsVal": "305471",
+      "yaxsVal": "550080",
+      "_tpbuzL": "일반한식",
+      "_keywords": [
+        "심야"
+      ]
+    },
+    {
+      "merNm": "보쌈정식 한상",
+      "merAddr": "서울 중구 충무로 172 ,1층 (명동2가)",
+      "merTpno": "02-0000-0000",
+      "merTpbuzNm": "족발/보쌈",
+      "allSaleRnk": 97.87,
+      "ccgSaleRnk": 38.56,
+      "loclPrsnPpltYn": false,
+      "merUrl": "https://web.paybooc.ai/",
+      "srtTime": "1557",
+      "endTime": "0106",
+      "frnrVsitYn": false,
+      "empyVsitYn": true,
+      "hldyDwk": [],
+      "congestionDwk": "금",
+      "congestionTizn": "저녁",
+      "vistCstmrRnkList": {
+        "rk01": "50대여성",
+        "rk02": "30대남성",
+        "rk03": "60대이상남성"
+      },
+      "xaxsVal": "310624",
+      "yaxsVal": "551516",
+      "_tpbuzL": "일반한식",
+      "_keywords": [
+        "회식",
+        "심야"
+      ]
+    }
+  ]
+}
