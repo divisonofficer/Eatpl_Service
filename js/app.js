@@ -1,7 +1,7 @@
 import { CONFIG } from "./config.js";
 import { search, status, kakaoPlace, kakaoSearchUrl, storePhotos, regionOf } from "./api.js";
 import { MODES, ALL_CATEGORIES, applyMode } from "./modes.js";
-import { hours, holiday, rankLabel, area, icon, buildMessage } from "./format.js";
+import { hours, holiday, rankLabel, area, icon, catLabel, buildMessage } from "./format.js";
 import { createSheet } from "./sheet.js";
 import { shareLink, readShare, isKakaoInApp, kakaoExternalUrl } from "./share.js";
 import { attachSuggest } from "./suggest.js";
@@ -183,7 +183,7 @@ function renderTabs() {
 function renderChips() {
   const ordered = [...ALL_CATEGORIES.filter((c) => state.categories.has(c)), ...ALL_CATEGORIES.filter((c) => !state.categories.has(c))];
   $("chips").innerHTML = ordered.map(
-    (c) => `<button type="button" class="chip" data-cat="${esc(c)}" aria-pressed="${state.categories.has(c)}">${esc(c)}</button>`
+    (c) => `<button type="button" class="chip" data-cat="${esc(c)}" aria-pressed="${state.categories.has(c)}">${esc(catLabel(c))}</button>`
   ).join("");
 }
 
@@ -267,7 +267,7 @@ function card(s) {
     }</div>
     <div class="info">
       <div class="name">${esc(s.name)}</div>
-      <div class="meta">${s.dist != null ? `<span class="dist">${state.origin?.kind === "store" ? fmtWalk(s.dist) : fmtDist(s.dist)}</span> · ` : ""}<span class="rank">${esc(rankLabel(s))}</span> · ${esc(s.category)} · ${esc(area(s))}</div>
+      <div class="meta">${s.dist != null ? `<span class="dist">${state.origin?.kind === "store" ? fmtWalk(s.dist) : fmtDist(s.dist)}</span> · ` : ""}<span class="rank">${esc(rankLabel(s))}</span> · ${esc(catLabel(s.category))} · ${esc(area(s))}</div>
       <div class="meta">${esc(hours(s))} · ${esc(holiday(s))}</div>
       <div class="tags">${s.group ? "<em>회식 적합</em>" : ""}${s.local ? "<span>동네 맛집</span>" : ""}${
         s.busyTime ? `<span>${esc(s.busyDay)} ${esc(s.busyTime)} 붐빔</span>` : ""

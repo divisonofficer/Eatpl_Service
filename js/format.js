@@ -25,10 +25,14 @@ const SHORT = {
   "족발/보쌈": "족발", 중국음식: "중식", 양꼬치: "양꼬치", 일식회집: "회", "스시/초밥": "스시", "해산물구이/찜": "해산물",
   주점: "주점", 칵테일바: "바", 치킨: "치킨", 분식: "분식", 떡볶이전문점: "떡볶이", 기타주점: "주점", 호프: "호프", "바(bar)": "바",
 };
+// 표시용 업종명 (API 값은 그대로 두고 화면에서만 바꿔 부른다)
+const DISPLAY = { 고기구이: "고깃집" };
+export const catLabel = (c) => DISPLAY[c] || c;
+
 export const icon = (s) => SHORT[s.category] || String(s.category || "").split("/")[0].replace(/전문점$/, "").slice(0, 3) || "식당";
 
 export function buildMessage(list, { modeNoun, tone, link }) {
-  const line = (s, i) => `${i + 1}) ${s.name} (${s.category} · ${area(s)} · ${holiday(s)})`;
+  const line = (s, i) => `${i + 1}) ${s.name} (${catLabel(s.category)} · ${area(s)} · ${holiday(s)})`;
   // 1차·2차가 섞여 있으면 단계별로 묶는다
   const staged = list.some((s) => s.stage) && new Set(list.map((s) => s.stage || "")).size > 1;
   let body;
