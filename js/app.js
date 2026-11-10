@@ -289,17 +289,17 @@ function card(s) {
 }
 
 function renderResults() {
-  const label = state.shared
+  // 개수를 앞에 둬서 말줄임돼도 보이게: "8곳 · 🍻 왕초바베큐 근처 300m"
+  const o = state.origin;
+  const where = state.shared
     ? "공유받은 후보"
-    : state.origin
-      ? state.origin.kind === "store"
-        ? `🍻 ${state.origin.name} 근처 ${fmtDist(state.radius)}`
-        : state.origin.kind === "place"
-        ? `📍 ${state.origin.name} ${fmtDist(state.radius)} 이내`
-        : `📍 ${state.origin.dong || "내 주변"} ${fmtDist(state.radius)} 이내`
-      : MODES[state.mode].label;
-  $("resultCount").textContent =
-    state.total > state.stores.length ? `${label} ${state.total}곳 · 상위 ${state.stores.length}` : `${label} ${state.stores.length}곳`;
+    : !o
+      ? MODES[state.mode].label
+      : o.kind === "store"
+        ? `🍻 ${o.name} 근처 ${fmtDist(state.radius)}`
+        : `📍 ${o.kind === "place" ? o.name : o.dong || "내 주변"} ${fmtDist(state.radius)}`;
+  const n = state.total > state.stores.length ? `${state.total}곳(상위 ${state.stores.length})` : `${state.stores.length}곳`;
+  $("resultCount").textContent = `${n} · ${where}`;
   renderStatus();
   $("results").innerHTML =
     (state.stores.length
