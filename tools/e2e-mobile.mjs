@@ -160,11 +160,11 @@ for (const [dx, dy] of [[40, 0], [0, 40], [-60, -30]]) {
   for (let i = 1; i <= 6; i++) { await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 200 + (dx * i) / 6, y: 300 + (dy * i) / 6, button: "left", buttons: 1 }); await sleep(20); }
   await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: 200 + dx, y: 300 + dy, button: "left", clickCount: 1 }); await sleep(500);
 }
-check("manyVisibleNoButton", await ev(`document.getElementById('areaBtn').hidden`));
+check("manyVisibleNoButton", await ev(`getComputedStyle(document.getElementById('areaBtn')).display === 'none'`));
 
 // 13) 지도를 끌어 옮기면 '이 지역에서 검색' → 보이는 영역 안의 매장
 await load(URL0); await sleep(1500);
-const btnBefore = await ev(`document.getElementById('areaBtn').hidden`);
+const btnBefore = await ev(`getComputedStyle(document.getElementById('areaBtn')).display === 'none'`);
 // 결과가 거의 없는 곳까지 (두 번 크게 끌기)
 for (let k = 0; k < 2; k++) {
   // 현위치 버튼(오른쪽 아래)·상단 버튼을 피해 지도 빈 곳에서 시작
@@ -173,7 +173,7 @@ for (let k = 0; k < 2; k++) {
   await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: 28, y: 162, button: "left", clickCount: 1 }); await sleep(500);
 }
 await until(`!document.getElementById('areaBtn').hidden`, 4000);
-const shown = await ev(`!document.getElementById('areaBtn').hidden`);
+const shown = await ev(`getComputedStyle(document.getElementById('areaBtn')).display !== 'none'`);
 const btnPos = await ev(`(() => { const r = document.getElementById('areaBtn').getBoundingClientRect(); return { y: Math.round(r.top), sheetTop: Math.round(document.getElementById('sheet').getBoundingClientRect().top) }; })()`);
 await shot("10-area-btn");
 await ev(`document.getElementById('areaBtn').click()`);
@@ -183,7 +183,7 @@ check("searchThisArea", btnBefore && shown && area.title.includes("일대") && a
 // 확대만 하면(검색 영역 안을 보는 것) 버튼 없음
 await ev(`document.querySelector('.leaflet-control-zoom-in')?.click() || document.querySelector('#map')`);
 await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 195, y: 300, deltaX: 0, deltaY: -600 }); await sleep(1200);
-check("zoomInNoButton", await ev(`document.getElementById('areaBtn').hidden`));
+check("zoomInNoButton", await ev(`getComputedStyle(document.getElementById('areaBtn')).display === 'none'`));
 await shot("11-area");
 
 // 14) 모드·인원 펼침 버튼: 접힘 → 펼침(4개/5개) → 선택 → 접힘 + 재검색

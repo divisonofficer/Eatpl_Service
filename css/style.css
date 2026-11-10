@@ -22,6 +22,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 * { box-sizing: border-box; }
+/* hidden 속성은 어떤 display 스타일보다 우선 (버튼에 display 를 주면 [hidden] 기본 규칙이 덮여 '숨김인데 보이는' 버그) */
+[hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
 button { font: inherit; color: inherit; cursor: pointer; }
 button:disabled { cursor: default; opacity: 0.4; }
@@ -539,3 +541,18 @@ body.previewing .area-btn { top: auto; bottom: calc(var(--pv-h) + 24px); }
   .gender-row { margin-top: 4px; }
   .bd-actions .btn { height: 42px; }
 }
+
+/* ---------- 추천 이유 배지 ---------- */
+.why { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; font-size: inherit; color: inherit; }
+.why span + span::before { content: none; }
+.rb { display: inline-flex; align-items: center; gap: 3px; height: 22px; padding: 0 7px 0 5px; border-radius: 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.rb .ic { width: 12px; height: 12px; flex: none; }
+.rb.people { background: var(--c-soft); color: var(--c-dark); }
+.rb.time { background: #eef4ff; color: #1a56c4; }
+.rb.place { background: #fff6d6; color: #8a5a00; }
+.rb.warn { background: var(--bg); color: var(--muted); }
+.mk-pop .why { display: none; }
+.rec-box li .ic { flex: none; }
+.rec-box li.people .ic { color: var(--c); }
+.rec-box li.time .ic { color: #1a56c4; }
+.rec-box li.place .ic { color: #b07800; }

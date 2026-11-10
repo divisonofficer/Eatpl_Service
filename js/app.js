@@ -462,10 +462,34 @@ function rankStores(list) {
 // 룸·주차·콜키지는 아이콘·상세 줄로 따로 보이므로 이유 문구에서는 뺀다 (점수에는 반영)
 const AMENITY_REASON = /^(룸 있어요|룸 없어요|주차 가능|콜키지 가능)$/;
 const recNoAmen = (rec) => rec && { ...rec, reasons: rec.reasons.filter((r) => !AMENITY_REASON.test(r.t)) };
+// 현재 결과에서 이유별 비율 (흔한 이유는 목록에서 뒤로)
+let reasonShare = new Map();
+function updateReasonShare() {
+  const cnt = new Map();
+  for (const s of state.stores) for (const r of s.rec?.reasons || []) cnt.set(r.t, (cnt.get(r.t) || 0) + 1);
+  const n = Math.max(1, state.stores.length);
+  reasonShare = new Map([...cnt].map(([t, c]) => [t, c / n]));
+}
+// 추천 이유 배지: 계열별 아이콘·색 (손님 = 연주황 / 시간 = 연파랑 / 장소·평판 = 연노랑 / 주의 = 회색)
+const REASON_STYLE = [
+  [/회식 적합/, "users", "people"],
+  [/단골|손님|또래/, "user", "people"],
+  [/붐빔|붐비는/, "clock", "time"],
+  [/늦게까지|새벽까지/, "moon", "time"],
+  [/연중무휴/, "calendar", "time"],
+  [/전국 상위/, "trend", "place"],
+  [/동네 맛집/, "pin", "place"],
+  [/도보|멀어요/, "walk", "place"],
+];
+const reasonStyle = (t) => (REASON_STYLE.find(([re]) => re.test(t)) || [0, "check", "people"]).slice(1);
+const reasonBadge = (r, warn = false) => {
+  const [ic, kind] = reasonStyle(r.t);
+  return `<span class="rb ${warn ? "warn" : kind}">${svg(ic, 12)}${esc(r.t)}</span>`;
+};
 function whyHtml(s) {
-  const { good, warn } = topReasons(recNoAmen(s.rec));
+  const { good, warn } = topReasons(recNoAmen(s.rec), 3, (t) => reasonShare.get(t) || 0);
   if (!good.length && !warn) return "";
-  return `<div class="why">${good.map((r) => `<span>${esc(r.t)}</span>`).join("")}${warn ? `<span class="warn">${esc(warn.t)}</span>` : ""}</div>`;
+  return `<div class="why">${good.map((r) => reasonBadge(r)).join("")}${warn ? reasonBadge(warn, true) : ""}</div>`;
 }
 
 // 팀 연령대 (필터 시트)
@@ -554,6 +578,7 @@ function addBtn(s, cls) {
 }
 
 function renderResults() {
+  updateReasonShare();
   const o = state.origin;
   const where = state.shared
     ? "공유받은 후보"
@@ -813,7 +838,7 @@ function recDetail(s) {
   const r = recNoAmen(s.rec);
   if (!r || r.blocked || !r.reasons.length) return "";
   return `<div class="rec-box"><b>추천 이유</b><ul>${r.reasons
-    .map((x) => `<li class="${x.w > 0 ? "pos" : "neg"}">${svg(x.w > 0 ? "check" : "minus", 14)}${esc(x.t)}</li>`)
+    .map((x) => `<li class="${x.w > 0 ? "pos " + reasonStyle(x.t)[1] : "neg"}">${svg(reasonStyle(x.t)[0], 15)}${esc(x.t)}</li>`)
     .join("")}</ul></div>`;
 }
 

@@ -34,6 +34,15 @@ export function openDuring(s, from, to) {
   return overlap(f, t) >= need || overlap(f + 1440, t + 1440) >= need;
 }
 
+// 최종 결제 시각(분, 자정 넘김은 +24h). 24시간 영업은 null
+function closeMin(s) {
+  if (!/^\d{4}$/.test(s.open || "") || !/^\d{4}$/.test(s.close || "")) return null;
+  const o = min(s.open);
+  let c = min(s.close);
+  if ((c - o + 1440) % 1440 >= 1430) return null;
+  if (c <= o) c += 1440;
+  return c;
+}
 const rankPts = (r) => {
   const x = Number(r);
   if (!Number.isFinite(x)) return 0;
@@ -59,8 +68,9 @@ export function recommend(s, ctx) {
   // 회식 적합 (인원 적을수록 비중 ↓)
   const scale = hc >= 5 ? 1 : hc >= 3 ? 0.6 : 0.3;
   if (s.group) add(W.group[mode] * scale, "회식 적합");
-  // 1위 고객 30~50대 남성
-  if (OFFICE.test(s.customers?.[0] || "")) add(W.office[mode] * scale, "30~50대 남성 단골");
+  // 1위 고객 30~50대 남성 → 실제 연령대로 구체적으로 ("40대 남성 단골")
+  const c0 = s.customers?.[0] || "";
+  if (OFFICE.test(c0)) add(W.office[mode] * scale, `${c0.replace(/남성$/, "")} 남성 단골`);
   // 팀 연령대 × 팀 구성(성별): 둘 다 맞는 단골층이 있으면 가장 구체적인 이유로
   const top3 = (s.customers || []).slice(0, 3);
   const sexOf = (c) => (c.endsWith("여성") ? "female" : c.endsWith("남성") ? "male" : null);
@@ -95,8 +105,19 @@ export function recommend(s, ctx) {
   if (a.room === "no" && hc >= 10) add(-4, "룸 없어요");
   if (a.park === "yes") add(3, "주차 가능");
   if (a.cork === "yes") add(mode === "after" ? 4 : 2, "콜키지 가능");
-  // 동네 맛집 (점심)
-  if (mode === "lunch" && s.local) add(3, "동네 맛집");
+  // 동네 맛집
+  if (s.local) add(mode === "lunch" ? 3 : 2, "동네 맛집");
+  // 전국 순위 (목록 배지는 구내 순위라 겹치지 않음)
+  if (Number(s.rankAll) <= 1) add(4, "전국 상위 1%");
+  else if (Number(s.rankAll) <= 3) add(2, "전국 상위 3%");
+  // 늦게까지 영업 (최종 결제 시각 기준)
+  const late = closeMin(s);
+  if (late != null) {
+    if ((mode === "after" || mode === "late") && late >= 26 * 60) add(3, "새벽까지 영업");
+    else if (mode === "dinner" && late >= 23 * 60) add(2, "늦게까지 영업");
+  }
+  // 연중무휴
+  if (Array.isArray(s.holidays) && !s.holidays.length) add(1, "연중무휴");
   // 사진 (근거로는 안 보임)
   if (ctx.hasPhoto) score += 2;
   // 제휴 데이터 자리 (BC카드 제공 시): 오늘 현황·시간대 분포·연령 분포·방문 후 이동
@@ -108,9 +129,12 @@ export function recommend(s, ctx) {
 }
 
 // 화면용: 좋은 이유 최대 3개 + 주의 1개
-export function topReasons(rec, n = 3) {
+// share(t) = 현재 결과 중 그 이유를 가진 매장 비율 → 흔할수록 뒤로 (그 매장만의 특징을 먼저)
+export function topReasons(rec, n = 3, share = () => 0) {
   if (!rec || rec.blocked) return { good: [], warn: null };
-  return { good: rec.reasons.filter((r) => r.w > 0).slice(0, n), warn: rec.reasons.filter((r) => r.w < 0).sort((x, y) => x.w - y.w)[0] || null };
+  const key = (r) => r.w * (1 - 0.85 * share(r.t));
+  const good = rec.reasons.filter((r) => r.w > 0).sort((x, y) => key(y) - key(x) || x.t.localeCompare(y.t)).slice(0, n);
+  return { good, warn: rec.reasons.filter((r) => r.w < 0).sort((x, y) => x.w - y.w)[0] || null };
 }
 
 export const todayKST = () => DAYS[new Date(Date.now() + 9 * 3600 * 1000).getUTCDay()];

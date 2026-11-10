@@ -26,9 +26,10 @@ test("30~50대 남성 단골·회식 적합이 순위를 끌어올린다", () =>
   const office = recommend(S({ rank: 3, customers: ["30대남성", "40대남성", "20대여성"] }), ctx());
   const both = recommend(S({ rank: 3, group: true, customers: ["40대남성"] }), ctx());
   assert.ok(office.score > plain.score && both.score > office.score);
-  assert.deepEqual(topReasons(both).good.map((r) => r.t), ["회식 적합", "30~50대 남성 단골"]);
+  assert.deepEqual(topReasons(both).good.map((r) => r.t).slice(0, 2), ["회식 적합", "40대 남성 단골"]);
   // 1위가 아니면 신호 없음
   assert.ok(!recommend(S({ customers: ["20대여성", "40대남성"] }), ctx()).reasons.some((r) => r.t.includes("남성 단골")));
+  assert.ok(office.reasons.some((r) => r.t === "30대 남성 단골"));
 });
 
 test("붐빔: 같은 요일·시간대면 주의, 다른 시간대면 가산", () => {
@@ -63,4 +64,15 @@ test("팀 구성(성별)·연령×성별 조합", () => {
   assert.ok(r.reasons.some((x) => x.t === "30대 여성 단골"));
   assert.ok(!r.reasons.some((x) => x.t === "우리 팀 또래 단골" || x.t === "여성 손님 많은 곳"));
   assert.ok(recommend(fem, ctx({ teamGender: "mixed" })).reasons.some((x) => x.t === "남녀 고루 찾는 곳"));
+});
+
+test("이유 다양화: 전국 순위·늦게까지·연중무휴·동네 맛집, 흔한 이유는 뒤로", () => {
+  const s = S({ rankAll: 0.8, close: "0100", local: true, customers: ["40대남성"] });
+  const r = recommend(s, ctx());
+  for (const t of ["전국 상위 1%", "늦게까지 영업", "연중무휴", "동네 맛집", "40대 남성 단골"]) assert.ok(r.reasons.some((x) => x.t === t), t);
+  assert.ok(recommend(S({ close: "0300", open: "1700" }), ctx({ mode: "after" })).reasons.some((x) => x.t === "새벽까지 영업"));
+  // 흔한 이유(share 높음)는 뒤로
+  const common = (t) => (t === "40대 남성 단골" ? 0.95 : 0);
+  assert.equal(topReasons(r, 3).good[0].t, "40대 남성 단골"); // 그대로면 1순위
+  assert.notEqual(topReasons(r, 3, common).good[0].t, "40대 남성 단골"); // 흔하면 1순위에서 밀림
 });
