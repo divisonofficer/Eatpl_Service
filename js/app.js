@@ -470,7 +470,7 @@ function whyHtml(s) {
 
 // 팀 연령대 (필터 시트)
 const AGES = ["20대", "30대", "40대", "50대"];
-const GENDERS = [["male", "남성 위주"], ["female", "여성 위주"], ["mixed", "반반"]];
+const GENDERS = [["male", "남성"], ["female", "여성"], ["mixed", "남녀 함께"]];
 function renderAges() {
   $("ageRow").innerHTML = AGES.map((a) => `<button type="button" class="pref" data-age="${a}" aria-pressed="${pending.ages.has(a)}">${a}${a === "50대" ? "+" : ""}</button>`).join("");
   $("genderRow").innerHTML = GENDERS.map(([k, l]) => `<button type="button" class="pref" data-gender="${k}" aria-pressed="${pending.gender === k}">${l}</button>`).join("");
