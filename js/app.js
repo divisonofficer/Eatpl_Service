@@ -103,7 +103,8 @@ function renderMarkers() {
         zIndexOffset: s.id === state.activeId ? 100000 : i < LABELED ? 5000 - i * 20 : 0,
       })
         .on("click", (e) => {
-          if (e.originalEvent?.target?.closest?.("[data-pop]")) return openDetail(s);
+          const pop = e.originalEvent?.target?.closest?.("[data-pop]");
+          if (pop) return openDetail(s, pop);
           select(s.id, "map");
         })
         .addTo(layer);
@@ -227,7 +228,7 @@ $("filterApply").addEventListener("click", () => {
 // 모든 다이얼로그: [data-close] 버튼, 바깥(배경) 클릭으로 닫기
 document.querySelectorAll("dialog").forEach((d) =>
   d.addEventListener("click", (e) => {
-    if (e.target === d || e.target.closest("[data-close]")) d.close();
+    if (e.target === d || e.target.closest("[data-close]")) d.id === "detail" ? closeDetail() : d.close();
   })
 );
 
@@ -447,7 +448,7 @@ function onAction(e) {
   if (d.rm) return toggleCandidate(d.rm);
   if (d.shareOne) return shareStore(storeById(d.shareOne));
   if (d.next) return findSecondStop(storeById(d.next));
-  if (d.detail) return openDetail(storeById(d.detail));
+  if (d.detail) return openDetail(storeById(d.detail), t.closest(".pv-card") || t);
   if (d.tone) {
     state.tone = d.tone;
     return renderDecide();
@@ -460,12 +461,35 @@ $("decide").addEventListener("click", onAction);
 // ---------- 매장 상세 ----------
 let detailStore = null;
 let detailMap = null;
-function openDetail(s) {
+// 카드 → 전체 화면으로 펼치기 (clip-path FLIP). 닫을 때는 원래 카드 자리로 접는다.
+const REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)");
+const EASE = "cubic-bezier(0.2, 0.8, 0.2, 1)";
+let detailSrc = null;
+function insetFrom(el, box) {
+  const r = el.getBoundingClientRect();
+  if (!r.width || r.bottom < 0 || r.top > innerHeight) return null; // 화면 밖이면 사용 안 함
+  const v = [r.top - box.top, box.right - r.right, box.bottom - r.bottom, r.left - box.left].map((x) => `${Math.max(0, x)}px`);
+  return `inset(${v.join(" ")} round 20px)`;
+}
+function openDetail(s, srcEl) {
   if (!s) return;
   detailStore = s;
+  detailSrc = srcEl || null;
   renderDetail(s);
-  $("detail").showModal();
-  $("detail").scrollTop = 0;
+  const d = $("detail");
+  d.showModal();
+  d.scrollTop = 0;
+  if (!REDUCE.matches) {
+    const from = srcEl && insetFrom(srcEl, d.getBoundingClientRect());
+    if (from) {
+      d.animate([{ clipPath: from, opacity: 0.6 }, { clipPath: "inset(0px 0px 0px 0px round 0px)", opacity: 1 }], { duration: 440, easing: EASE });
+      d.querySelector(".dt-hero")?.animate([{ transform: "scale(1.06)", filter: "brightness(0.92)" }, { transform: "none", filter: "none" }], { duration: 520, easing: EASE });
+    } else {
+      d.animate([{ transform: "translateY(48px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 300, easing: EASE });
+    }
+    d.querySelector(".dt-body")?.animate([{ transform: "translateY(28px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 420, delay: 140, easing: EASE, fill: "backwards" });
+    d.querySelector(".dt-bar")?.animate([{ transform: "translateY(100%)" }, { transform: "none" }], { duration: 360, delay: 200, easing: EASE, fill: "backwards" });
+  }
   // 열린 뒤 크기 확정 → 미니 지도 재계산
   requestAnimationFrame(() => detailMap?.invalidateSize().setView([s.lat, s.lng], 16));
   loadPhotos(s);
@@ -517,6 +541,26 @@ function renderDetail(s, keepScroll = false) {
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(detailMap);
   L.marker([s.lat, s.lng], { icon: L.divIcon({ className: "", html: `<div class="mk"><div class="mk-pin hot"><span class="mk-in">${svg(catIcon(s.category), 18)}</span></div></div>`, iconSize: null, iconAnchor: [0, 0] }) }).addTo(detailMap);
 }
+let closing = false;
+async function closeDetail() {
+  const d = $("detail");
+  if (!d.open || closing) return;
+  closing = true;
+  if (!REDUCE.matches) {
+    const to = detailSrc?.isConnected && insetFrom(detailSrc, d.getBoundingClientRect());
+    const anim = to
+      ? d.animate([{ clipPath: `inset(${d.scrollTop ? 0 : 0}px 0px 0px 0px round 0px)`, opacity: 1 }, { clipPath: to, opacity: 0.4 }], { duration: 360, easing: EASE })
+      : d.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(60px)", opacity: 0 }], { duration: 240, easing: "ease-in" });
+    await anim.finished.catch(() => {});
+  }
+  d.close();
+  closing = false;
+}
+// Esc / 안드로이드 뒤로(취소)도 애니메이션 닫기
+$("detail").addEventListener("cancel", (e) => {
+  e.preventDefault();
+  closeDetail();
+});
 $("detail").addEventListener("close", () => {
   detailMap?.remove();
   detailMap = null;
@@ -818,7 +862,7 @@ function findSecondStop(s) {
     state.candidates.push(s);
     renderTray();
   }
-  $("detail").open && $("detail").close();
+  $("detail").open && $("detail").close(); // 화면 전환이라 즉시 닫음
   state.origin = { kind: "store", id: s.id, name: s.name, lat: s.lat, lng: s.lng, radii: WALK_RADII, query: guOf(s.address) };
   drawMe(state.origin);
   $("locateBtn").classList.remove("on");
