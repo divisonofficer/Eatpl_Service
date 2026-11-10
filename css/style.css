@@ -49,7 +49,7 @@ button:disabled { cursor: default; opacity: 0.45; }
 }
 .brand { font-weight: 800; color: var(--c); white-space: nowrap; font-size: 15px; }
 #loc { flex: 1; min-width: 0; border: 0; outline: 0; font: inherit; font-size: 16px; background: transparent; padding: 0 4px; }
-.headcount { display: flex; align-items: center; gap: 2px; font-size: 14px; color: var(--sub); padding: 0 6px; border-left: 1px solid var(--line); }
+.headcount { display: flex; align-items: center; gap: 2px; font-size: 12px; color: var(--sub); padding: 0 6px; border-left: 1px solid var(--line); }
 #headcount { width: 34px; border: 0; outline: 0; font: inherit; font-size: 15px; text-align: center; background: transparent; -moz-appearance: textfield; }
 #headcount::-webkit-inner-spin-button { -webkit-appearance: none; }
 .go { border: 0; background: var(--c); color: #fff; border-radius: 22px; height: 40px; padding: 0 16px; font-weight: 700; }
@@ -94,8 +94,8 @@ button:disabled { cursor: default; opacity: 0.45; }
 /* ---------- 카드 ---------- */
 .card { display: grid; grid-template-columns: 64px 1fr auto; gap: 4px 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); cursor: pointer; }
 .card.open { background: #fffaf5; }
-.thumb { width: 64px; height: 64px; border-radius: 12px; display: grid; place-items: center; font-size: 30px; background: var(--bg); position: relative; }
-.thumb.group { background: var(--c-soft); }
+.thumb { width: 64px; height: 64px; border-radius: 12px; display: grid; place-items: center; font-size: 14px; font-weight: 800; color: var(--sub); background: var(--bg); position: relative; }
+.thumb.group { background: var(--c-soft); color: var(--c); }
 .thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
 .thumb .rk { position: absolute; left: 4px; bottom: 4px; font-size: 9px; font-weight: 800; color: #fff; background: var(--c); border-radius: 4px; padding: 0 4px; }
 .info { min-width: 0; }
@@ -254,9 +254,27 @@ dialog.eatpl[open] { display: flex; }
   list-style: none; margin: 0; padding: 6px 0; background: #fff; border-radius: 16px; box-shadow: var(--shadow);
   max-height: 50dvh; overflow-y: auto; overscroll-behavior: contain;
 }
-.suggest li { display: grid; grid-template-columns: 28px 1fr; grid-template-rows: auto auto; column-gap: 6px; padding: 8px 14px; cursor: pointer; }
+.suggest li { display: grid; grid-template-columns: 36px 1fr; grid-template-rows: auto auto; column-gap: 6px; padding: 8px 14px; cursor: pointer; }
 .suggest li[aria-selected="true"], .suggest li:hover { background: var(--bg); }
-.sg-ic { grid-row: 1 / 3; align-self: center; font-size: 16px; text-align: center; }
+.sg-ic { grid-row: 1 / 3; align-self: center; justify-self: start; font-size: 10px; font-weight: 700; color: var(--sub); background: var(--bg); border-radius: 4px; padding: 2px 5px; }
 .sg-main { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sg-sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.first-stop b.pl { background: #e8f0fe; }
+.first-stop b.pl { background: #e8f0fe; color: #1a73e8; }
+
+/* ---------- 업종 칩 더보기 ---------- */
+.chips-row { position: relative; display: flex; align-items: flex-start; gap: 6px; }
+.chips-row .chips { flex: 1; min-width: 0; }
+.chips-more {
+  flex: none; height: 30px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--ink); color: #fff;
+  font-size: 13px; font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,.18);
+}
+.chips-row.expanded {
+  background: #fff; border-radius: 16px; padding: 10px; box-shadow: var(--shadow); flex-direction: column; align-items: stretch;
+}
+.chips-row.expanded .chips { flex-wrap: wrap; overflow: visible; margin: 0; padding: 0; }
+.chips-row.expanded .chip { box-shadow: none; background: var(--bg); }
+.chips-row.expanded .chip[aria-pressed="true"] { background: var(--c-soft); box-shadow: 0 0 0 1.5px var(--c) inset; }
+.chips-row.expanded .chips-more { align-self: flex-end; background: var(--bg); color: var(--sub); box-shadow: none; }
+@media (min-width: 900px) {
+  .chips-row.expanded { padding: 0; box-shadow: none; }
+}

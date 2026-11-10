@@ -19,15 +19,13 @@ export function area(s) {
   return s.address.split(" ")[1] || s.address;
 }
 
-// 업종 → 썸네일 아이콘 (API에 매장 사진이 없어 대체)
-const ICONS = {
-  고기구이: "🥩", 갈비전문점: "🍖", 일반한식: "🍚", 한정식: "🍱", "찜/탕/찌개": "🍲", "곱창전골/구이": "🔥",
-  "족발/보쌈": "🐷", 중국음식: "🥟", 마라탕: "🌶️", 양꼬치: "🍢", "국수/면/만두": "🍜", 일식회집: "🐟", "스시/초밥": "🍣",
-  "해산물구이/찜": "🦀", 일식라멘: "🍜", 일식돈가스: "🍛", 주점: "🍺", 칵테일바: "🍸", 치킨: "🍗", 분식: "🍙",
-  떡볶이전문점: "🌶️", 김밥전문점: "🍙", 피자: "🍕", 버거: "🍔", 카페: "☕", 뷔페: "🍽️", 이탈리아음식: "🍝",
-  "전/부침개": "🥞", 아시안: "🍛", 기타외국식: "🌏", 스넥: "🍢",
+// 업종 → 썸네일 약칭 (사진이 없을 때)
+const SHORT = {
+  고기구이: "고기", 갈비전문점: "갈비", 일반한식: "한식", 한정식: "한정식", "찜/탕/찌개": "찌개", "곱창전골/구이": "곱창",
+  "족발/보쌈": "족발", 중국음식: "중식", 양꼬치: "양꼬치", 일식회집: "회", "스시/초밥": "스시", "해산물구이/찜": "해산물",
+  주점: "주점", 칵테일바: "바", 치킨: "치킨", 분식: "분식", 떡볶이전문점: "떡볶이", 기타주점: "주점", 호프: "호프", "바(bar)": "바",
 };
-export const icon = (s) => ICONS[s.category] || "🍽️";
+export const icon = (s) => SHORT[s.category] || String(s.category || "").split("/")[0].replace(/전문점$/, "").slice(0, 3) || "식당";
 
 export function buildMessage(list, { modeNoun, tone, link }) {
   const line = (s, i) => `${i + 1}) ${s.name} (${s.category} · ${area(s)} · ${holiday(s)})`;
@@ -44,9 +42,9 @@ export function buildMessage(list, { modeNoun, tone, link }) {
     }
   } else body = list.map(line);
   const noun = staged ? "회식" : modeNoun;
-  const tail = link ? ["", `📍 위치·상세 보기: ${link}`] : [];
+  const tail = link ? ["", `위치·상세 보기: ${link}`] : [];
   if (tone === "casual") {
-    return [`다들 ${noun} 장소 후보 골라봤어요!`, "", ...body, ...tail, "", "편한 곳 알려주시면 바로 예약할게요 🙂"].join("\n");
+    return [`다들 ${noun} 장소 후보 골라봤어요!`, "", ...body, ...tail, "", "편한 곳 알려주시면 바로 예약할게요"].join("\n");
   }
   return [`안녕하세요, 이번 ${noun} 장소 후보 공유드립니다.`, "", ...body, ...tail, "", "편하신 곳 말씀 주시면 예약하겠습니다. 감사합니다."].join("\n");
 }

@@ -16,12 +16,15 @@
     <form class="search" id="filters" role="search">
       <span class="brand" aria-hidden="true">회식픽</span>
       <input id="loc" placeholder="동네·역·회사 (예: 천호역)" autocomplete="off" enterkeyhint="search" />
-      <label class="headcount" title="인원">👥<input id="headcount" type="number" min="1" max="99" value="12" inputmode="numeric" /></label>
+      <label class="headcount">인원<input id="headcount" type="number" min="1" max="99" value="12" inputmode="numeric" /></label>
       <button type="submit" class="go" aria-label="검색">검색</button>
     </form>
     <ul id="suggest" class="suggest" role="listbox" hidden></ul>
     <nav class="scroller tabs" id="modeTabs" role="tablist"></nav>
-    <div class="scroller chips" id="chips"></div>
+    <div class="chips-row" id="chipsRow">
+      <div class="scroller chips" id="chips"></div>
+      <button type="button" id="chipsMore" class="chips-more" aria-expanded="false" aria-controls="chips">더보기</button>
+    </div>
   </header>
 
   <button type="button" id="locateBtn" class="locate" aria-label="내 위치로 검색" title="내 위치 주변 검색">

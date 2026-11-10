@@ -40,7 +40,7 @@ async function kakaoPlaces(q) {
   return p;
 }
 
-const ICON = { gu: "📍", station: "🚇", place: "🏢", recent: "🕘" };
+const TAG = { gu: "지역", station: "역", place: "장소", recent: "최근" };
 
 export function attachSuggest({ input, box, onPick }) {
   let items = [];
@@ -59,7 +59,7 @@ export function attachSuggest({ input, box, onPick }) {
     box.innerHTML = items
       .map(
         (it, i) => `<li role="option" id="sg-${i}" data-i="${i}" aria-selected="${i === active}">
-          <span class="sg-ic">${ICON[it.recent ? "recent" : it.kind]}</span>
+          <span class="sg-ic">${TAG[it.recent ? "recent" : it.kind]}</span>
           <span class="sg-main">${esc(it.label)}</span>
           ${it.sub ? `<span class="sg-sub">${esc(it.sub)}</span>` : ""}
         </li>`

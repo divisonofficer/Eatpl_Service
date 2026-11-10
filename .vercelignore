@@ -1,0 +1,8 @@
+# 배포 제외 (정적 서빙되면 안 되거나 불필요)
+tools/
+test/
+proxy/
+docs/
+server.mjs
+.env
+.env.*

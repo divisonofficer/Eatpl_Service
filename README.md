@@ -5,7 +5,9 @@
 ## 실행
 
 ```bash
-npm start            # = node server.mjs → http://localhost:8000 (의존성 없음, Node 18+)
+npm start            # = node server.mjs → http://localhost:8000 (의존성 없음, Node 22+)
+npm test             # 사진 필터 단위 테스트
+npm run e2e          # 모바일 e2e (서버 실행 중일 때)
 ```
 
 - 기본: **실데이터** — 로컬 서버가 `/api/eatpl/search`를 [k-skill-proxy](https://github.com/NomaDamas/k-skill)
@@ -18,21 +20,36 @@ npm start            # = node server.mjs → http://localhost:8000 (의존성 �
 ## 구조
 
 ```
-server.mjs          로컬 서버: 정적 파일 + k-skill-proxy·다음 이미지 검색 중계(10분 캐시)
-index.html          한 페이지 앱
-css/style.css       데스크톱(지도+우측 패널) / 모바일(지도 위, 리스트 아래)
-js/config.js        데이터 소스 (live | mock | proxy), ?source= 로 전환
-js/api.js           API 호출 + normalize (응답 포맷 바뀌면 여기만 수정)
-js/geo-def.js       TM128 proj4 정의
-js/modes.js         회식 모드 4종: 키워드·기본 업종·필터·정렬 규칙
-js/format.js        영업시간/랭킹 표기, 안내문 템플릿(격식/캐주얼)
-js/app.js           UI (Leaflet 지도, 카드, 후보·안내문 다이얼로그)
-js/sheet.js         모바일 바텀시트 (peek/half/full 스냅, 데스크톱은 좌측 패널)
-data/mock.json      모의 응답 50건 (정의서 v1 스키마, TM128 좌표, 매장명 가상)
-tools/gen-mock.mjs  모의 데이터 생성기: node tools/gen-mock.mjs
-proxy/eatpl.php     닷홈 PHP 프록시 (자체 기관코드 발급 시용, 미검증)
-vendor/             leaflet 1.9.4, proj4 2.12.1 (오프라인용 로컬 사본)
+index.html            한 페이지 앱
+css/style.css         모바일(바텀시트) / 데스크톱(좌측 패널)
+js/app.js             UI: 지도·핀 겹침 정리·카드·잇플 모달·후보/공유·현위치·1차→2차
+js/api.js             데이터 계층 (live | mock | proxy), 사진·행정구역 조회
+js/modes.js           모드 4종(1차 회식·2차·점심 회식·야근 야식) 필터·정렬
+js/format.js          표기, 안내문 템플릿
+js/sheet.js           바텀시트 스냅
+js/suggest.js         검색어 추천 (구·역·장소)
+js/share.js           후보 공유 링크 (서버 저장 없음)
+lib/relay.mjs         API 중계 + CDN 캐시 헤더 (로컬·Vercel 공용)
+lib/photos.mjs        사진 결정론 필터 (단위 테스트: test/)
+lib/vercel.mjs        Vercel 함수 어댑터
+api/**.mjs            Vercel 함수 (경로만 지정)
+server.mjs            로컬 개발 서버 (배포 제외)
+data/mock.json        모의 데이터 (실데이터 실패 시 폴백)
+tools/                모의 데이터 생성기, e2e (배포 제외)
+docs/                 주최 측 질문서 (배포 제외)
 ```
+
+## 배포 (Vercel)
+
+1. Vercel → Add New Project → GitHub `divisonofficer/Eatpl_Service` Import
+   - Framework Preset: **Other**, Build Command: 비움, Output Directory: 비움(루트)
+2. Settings → Environment Variables: `KAKAO_REST_KEY` (사진용, Production/Preview)
+3. 배포 후 도메인(예: `xxx.vercel.app`)을 공모전에 등록 — 순 사용자 집계 기준 호스트
+4. 카카오 디벨로퍼스 → 앱 → 플랫폼(Web)에 배포 도메인 추가 (REST 키는 서버에서만 쓰지만 등록해 두면 안전)
+
+캐시: `/api/eatpl/search` 6시간, 키워드·사진 1일, 행정구역 7일 (Vercel CDN, URL 단위).
+k-skill-proxy 한도(IP당 60회/분)를 서비스 전체가 나눠 쓰므로 캐시가 필수.
+다른 사이트 브라우저에서 `/api/*` 호출은 403 (`Sec-Fetch-Site` 검사).
 
 ## API 연동 상태
 

@@ -91,7 +91,7 @@ await send("Page.navigate", { url: process.argv[2] || "http://localhost:8000/" }
 for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.querySelectorAll('.card').length > 0`)) break; }
 await sleep(800);
 await ev(`document.getElementById('locateBtn').click()`);
-for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.getElementById('resultCount').textContent.includes('📍')`)) break; }
+for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.getElementById('resultCount').textContent.includes('을지로3가')`)) break; }
 await sleep(1500);
 R.locate = await ev(`({
   title: document.getElementById('resultCount').textContent,
@@ -110,7 +110,7 @@ await sleep(600);
 R.tabs = await ev(`[...document.querySelectorAll('#modeTabs button')].map(b => b.textContent)`);
 await ev(`document.querySelector('.card').click()`); await sleep(500);
 await ev(`document.querySelector('.card.open [data-next]').click()`);
-for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.getElementById('resultCount').textContent.includes('🍻')`)) break; }
+for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.getElementById('resultCount').textContent.includes('근처')`)) break; }
 await sleep(1200);
 R.secondStop = await ev(`({
   title: document.getElementById('resultCount').textContent,
@@ -122,7 +122,7 @@ R.secondStop = await ev(`({
 })`);
 await ev(`[...document.querySelectorAll('.add')].find(b => !b.classList.contains('on'))?.click()`); await sleep(200);
 await ev(`document.getElementById('candBtn').click()`); await sleep(300);
-R.stagedMsg = await ev(`document.getElementById('message').value.split('\\n📍')[0]`);
+R.stagedMsg = await ev(`document.getElementById('message').value.split('\\n위치·상세')[0]`);
 await ev(`document.getElementById('msgDialog').close()`);
 await shot("09-second");
 

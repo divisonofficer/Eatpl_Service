@@ -197,6 +197,12 @@ $("modeTabs").addEventListener("click", (e) => {
   renderChips();
   run();
 });
+$("chipsMore").addEventListener("click", () => {
+  const open = $("chipsRow").classList.toggle("expanded");
+  $("chipsMore").textContent = open ? "접기" : "더보기";
+  $("chipsMore").setAttribute("aria-expanded", String(open));
+  if (!open) $("chips").scrollLeft = 0;
+});
 $("chips").addEventListener("click", (e) => {
   const c = e.target.closest("[data-cat]")?.dataset.cat;
   if (!c) return;
@@ -273,7 +279,7 @@ function card(s) {
     <div class="detail">
       ${photosHtml(s)}
       <button type="button" class="cta" data-eatpl="${esc(s.id)}"><span>잇플에서 상세 보기</span></button>
-      ${state.mode === "dinner" && !state.shared ? `<button type="button" class="next-stop" data-next="${esc(s.id)}">🍻 이 근처 2차 찾기</button>` : ""}
+      ${state.mode === "dinner" && !state.shared ? `<button type="button" class="next-stop" data-next="${esc(s.id)}">이 근처 2차 찾기</button>` : ""}
       <dl>
         <dt>주소</dt><dd>${esc(s.address)}</dd>
         <dt>영업</dt><dd>${esc(hours(s))} · ${esc(holiday(s))}</dd>
@@ -289,23 +295,22 @@ function card(s) {
 }
 
 function renderResults() {
-  // 개수를 앞에 둬서 말줄임돼도 보이게: "8곳 · 🍻 왕초바베큐 근처 300m"
+  // 개수를 앞에 둬서 말줄임돼도 보이게: "8곳 · 왕초바베큐 근처 300m"
   const o = state.origin;
   const where = state.shared
     ? "공유받은 후보"
     : !o
       ? MODES[state.mode].label
       : o.kind === "store"
-        ? `🍻 ${o.name} 근처 ${fmtDist(state.radius)}`
-        : `📍 ${o.kind === "place" ? o.name : o.dong || "내 주변"} ${fmtDist(state.radius)}`;
+        ? `${o.name} 근처 ${fmtDist(state.radius)}`
+        : `${o.kind === "place" ? o.name : o.dong || "내 주변"} ${fmtDist(state.radius)}`;
   const n = state.total > state.stores.length ? `${state.total}곳(상위 ${state.stores.length})` : `${state.stores.length}곳`;
   $("resultCount").textContent = `${n} · ${where}`;
   renderStatus();
   $("results").innerHTML =
     (state.stores.length
       ? state.stores.map(card).join("")
-      : `<li class="empty">결과 없음</li>`) +
-    `<li class="attrib">eat.pl 잇플 · BC카드 결제 데이터 기반</li>`;
+      : `<li class="empty">결과 없음</li>`);
   if (state.activeId) {
     const s = state.stores.find((v) => v.id === state.activeId);
     resolveKakao(s);
@@ -320,10 +325,9 @@ function photosHtml(s) {
   return `<div class="photos">${s.photo.images
     .map(
       (im) => `<a href="${esc(im.source)}" target="_blank" rel="noopener nofollow" title="출처: ${esc(im.site || im.source)}">
-        <img src="${esc(im.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.remove()" />
-        <span>${esc(im.site || "출처")}</span></a>`
+        <img src="${esc(im.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.remove()" /></a>`
     )
-    .join("")}<small class="photo-note">Daum 검색</small></div>`;
+    .join("")}</div>`;
 }
 
 // 사진 로드 → 상태에 저장 → 핀·카드 갱신 (같은 매장 중복 호출은 api 캐시가 흡수)
@@ -524,7 +528,7 @@ function clearOrigin() {
 function drawMe(o) {
   meLayer.clearLayers();
   if (o.kind === "store" || o.kind === "place") {
-    const badge = o.kind === "store" ? "<b>1차</b>" : "<b class=\"pl\">📍</b>";
+    const badge = o.kind === "store" ? "<b>1차</b>" : "<b class=\"pl\">기준</b>";
     L.marker([o.lat, o.lng], {
       icon: L.divIcon({ className: "", html: `<div class="first-stop">${badge}${esc(o.name)}</div>`, iconSize: null }),
       interactive: false,
