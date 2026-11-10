@@ -556,3 +556,62 @@ body.previewing .area-btn { top: auto; bottom: calc(var(--pv-h) + 24px); }
 .rec-box li.people .ic { color: var(--c); }
 .rec-box li.time .ic { color: #1a56c4; }
 .rec-box li.place .ic { color: #b07800; }
+
+/* ======================================================================
+   색 위계 — 주황은 '행동'과 '가장 중요한 정보'에만.
+   주황: 주요 버튼(잇플·공유), 후보 버튼, 상위 3곳·선택 핀, 상위 1% 배지, 회식 적합
+   그 외: 남색(선택 상태) · 파랑(손님) · 초록(시간) · 회색(장소·평판·편의)
+   ====================================================================== */
+:root {
+  --navy: #1f2a44;
+  --blue-bg: #eef4ff; --blue: #1a56c4;
+  --green-bg: #ebfbee; --green: #2b8a3e;
+  --slate-bg: #f1f3f5; --slate: #495057;
+}
+/* 순위 배지: 1%만 주황 */
+.tier.t3 { background: var(--c-soft); color: var(--c); }
+.tier.t5, .tier.t10 { background: var(--slate-bg); color: var(--navy); }
+.tier.t30 { background: var(--slate-bg); color: var(--muted); }
+.mk-rk { color: var(--navy); }
+.mk-rk.t1 { background: var(--c); color: #fff; }
+.mk-rk.t3 { background: #fff; color: var(--c); }
+
+/* 추천 이유 배지 */
+.rb.people { background: var(--blue-bg); color: var(--blue); }
+.rb.time { background: var(--green-bg); color: var(--green); }
+.rb.place { background: var(--slate-bg); color: var(--slate); }
+.rb.key { background: var(--c-soft); color: var(--c-dark); } /* 회식 적합 */
+.rec-box { background: var(--bg); }
+.rec-box b { color: var(--ink); }
+.rec-box li.people .ic { color: var(--blue); }
+.rec-box li.time .ic { color: var(--green); }
+.rec-box li.place .ic { color: var(--slate); }
+.rec-box li.key .ic { color: var(--c); }
+
+/* 룸·주차·콜키지 */
+.am-b.on { background: var(--slate-bg); color: var(--navy); }
+.dt-rows .am-row.yes .ic { color: var(--navy); }
+.tags .am, .tags em.am { background: var(--slate-bg); color: var(--navy); }
+
+/* 선택 상태 = 남색 */
+.cat-tile[aria-pressed="true"] { background: var(--navy); color: #fff; box-shadow: none; }
+.pref[aria-pressed="true"], .quick2 .pref[aria-pressed="true"] { background: var(--navy); color: #fff; }
+.size-seg button[aria-pressed="true"], .seg button[aria-pressed="true"] { background: var(--navy); }
+.cat-btn.custom { background: var(--navy); }
+
+/* 목록·카드 */
+.add { color: var(--navy); border-color: var(--line); }
+.add.on { background: var(--c); border-color: var(--c); color: #fff; }
+.tile, .tile.g { color: var(--slate); background: radial-gradient(120% 90% at 100% 0%, rgba(255,255,255,.9), transparent 60%), linear-gradient(150deg, #f6f7f9, #e9ebef); }
+.pv-actions > * .ic { color: var(--navy); }
+.pv-actions > .on { background: var(--c-soft); color: var(--c); }
+.pv-actions > .on .ic { color: var(--c); }
+.dt-links a, .dt-rows span a { color: var(--blue); }
+.meta .dist { color: var(--blue); }
+
+/* 핀: 일반은 남색 아이콘, 상위 3곳·선택만 주황 */
+.mk-pin { color: var(--navy); }
+.mk-pin.hot { background: var(--c); color: #fff; }
+.mk.mini .mk-pin { color: var(--slate); }
+.mk.mini .mk-pin.g { border-color: var(--navy); color: var(--navy); }
+.dt-tile.g { color: var(--slate); background: linear-gradient(160deg, var(--bg), #eceef1); }

@@ -472,7 +472,7 @@ function updateReasonShare() {
 }
 // 추천 이유 배지: 계열별 아이콘·색 (손님 = 연주황 / 시간 = 연파랑 / 장소·평판 = 연노랑 / 주의 = 회색)
 const REASON_STYLE = [
-  [/회식 적합/, "users", "people"],
+  [/회식 적합/, "users", "key"],
   [/단골|손님|또래/, "user", "people"],
   [/붐빔|붐비는/, "clock", "time"],
   [/늦게까지|새벽까지/, "moon", "time"],
