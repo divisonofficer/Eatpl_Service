@@ -40,6 +40,7 @@ const inCand = (id) => state.candidates.some((c) => c.id === id);
 // 정적 버튼 아이콘
 $("searchIc").innerHTML = svg("search", 20);
 $("locateBtn").innerHTML = svg("locate", 22);
+$("candIc").innerHTML = svg("share", 15);
 document.querySelectorAll("[data-close], #epClose, #inapp .icon-btn").forEach((b) => (b.innerHTML = svg("close", 20)));
 
 // ---------- 지도 ----------
@@ -574,7 +575,7 @@ function amenityRows(s) {
 function addBtn(s, cls) {
   const on = inCand(s.id);
   const full = state.candidates.length >= CONFIG.maxCandidates;
-  return `<button type="button" class="${cls}${on ? " on" : ""}" data-add="${esc(s.id)}" aria-label="${on ? "후보에서 빼기" : "후보에 담기"}" ${!on && full ? "disabled" : ""}>${svg(on ? "check" : "plus", 20)}</button>`;
+  return `<button type="button" class="${cls}${on ? " on" : ""}" data-add="${esc(s.id)}" aria-label="${on ? "빼기" : "담기"}" ${!on && full ? "disabled" : ""}>${svg(on ? "check" : "plus", 20)}</button>`;
 }
 
 function renderResults() {
@@ -591,11 +592,8 @@ function renderResults() {
           : `${o.kind === "place" ? o.name : o.dong || "내 주변"} ${fmtDist(state.radius)}`;
   const on = PREFS.filter((p) => state.prefs.has(p.k)).map((p) => p.label);
   const pend = prefsPending();
-  const n = on.length
-    ? `${state.stores.length}곳`
-    : state.total > state.stores.length ? `${state.total}곳(상위 ${state.stores.length})` : `${state.stores.length}곳`;
-  $("resultCount").textContent = `${n} · ${where}${on.length ? ` · ${on.join("·")}` : ""}${pend ? ` · 확인 중 ${pend}` : ""}`;
-  $("headSub").textContent = state.excluded && !state.shared ? `${state.day ? state.day + "요일" : "오늘"} 휴무·영업 외 ${state.excluded}곳 제외 · 최근 1개월 결제 기준` : "최근 1개월 결제 기준";
+  // "1차 회식 60곳" — 보이는 목록 수만. 필터·확인 중은 뒤에 짧게
+  $("resultCount").textContent = `${where} ${state.stores.length}곳${on.length ? ` · ${on.join("·")}` : ""}${pend ? ` · 확인 중` : ""}`;
   renderStatus();
   $("results").innerHTML = state.stores.length
     ? state.stores.map(rowHtml).join("")
@@ -656,7 +654,7 @@ function pvCard(s) {
     <div class="pv-actions">
       <button type="button" data-eatpl="${esc(s.id)}">${svg("external", 20)}<span>잇플</span></button>
       <a href="${esc(kakaoRoute(s))}" target="_blank" rel="noopener">${svg("route", 20)}<span>길찾기</span></a>
-      <button type="button" data-add="${esc(s.id)}" class="${on ? "on" : ""}" ${!on && state.candidates.length >= CONFIG.maxCandidates ? "disabled" : ""}>${svg(on ? "check" : "plus", 20)}<span>${on ? "담김" : "후보"}</span></button>
+      <button type="button" data-add="${esc(s.id)}" class="${on ? "on" : ""}" ${!on && state.candidates.length >= CONFIG.maxCandidates ? "disabled" : ""}>${svg(on ? "check" : "plus", 20)}<span>${on ? "담김" : "담기"}</span></button>
       <button type="button" data-share-one="${esc(s.id)}">${svg("share", 20)}<span>공유</span></button>
     </div>
     ${state.mode === "dinner" && !state.shared ? `<button type="button" class="pv-next" data-next="${esc(s.id)}">이 근처 2차 찾기 ${svg("chevron", 14)}</button>` : ""}
@@ -794,7 +792,7 @@ function renderDetail(s, keepScroll = false) {
       ${state.mode === "dinner" && !state.shared ? `<button type="button" class="btn btn-line btn-block" data-next="${esc(s.id)}">이 근처 2차 찾기</button>` : ""}
     </div>
     <div class="dt-bar">
-      <button type="button" class="btn btn-ghost" data-add="${esc(s.id)}" ${!on && state.candidates.length >= CONFIG.maxCandidates ? "disabled" : ""}>${svg(on ? "check" : "plus", 18)} ${on ? "담김" : "후보 담기"}</button>
+      <button type="button" class="btn btn-ghost" data-add="${esc(s.id)}" ${!on && state.candidates.length >= CONFIG.maxCandidates ? "disabled" : ""}>${svg(on ? "check" : "plus", 18)} ${on ? "담김" : "담기"}</button>
       <button type="button" class="btn btn-primary" data-eatpl="${esc(s.id)}">잇플에서 보기 ${svg("chevron", 18)}</button>
     </div>`;
   if (keepScroll) {
@@ -850,7 +848,7 @@ function toggleCandidate(id, stage) {
   else if (s && state.candidates.length < CONFIG.maxCandidates) {
     s.stage = stage ?? (state.mode === "dinner" ? "1차" : state.mode === "after" ? "2차" : "");
     state.candidates.push(s);
-    if (state.candidates.length === CONFIG.maxCandidates) toast("후보 3곳 선택됨");
+    if (state.candidates.length === CONFIG.maxCandidates) toast("3곳 담았어요");
   }
   renderTray();
   // 후보 버튼이 있는 곳 갱신 (전체 비활성/활성 상태가 바뀌므로 보이는 것 모두)
@@ -870,6 +868,7 @@ function renderTray() {
   const n = state.candidates.length;
   $("candCount").textContent = n;
   $("candBtn").disabled = !n;
+  $("candBtn").hidden = !n; // 후보가 생기면 나타남
   $("candBtn").classList.toggle("has", n > 0);
 }
 
@@ -1054,9 +1053,10 @@ function toast(msg) {
 function renderStatus() {
   const b = $("statusBadge");
   const live = status.source !== "mock" && !status.fellBack;
-  b.hidden = false;
-  b.className = `badge ${live ? "badge-live" : ""}`;
-  b.textContent = state.shared ? "공유 링크" : live ? "실데이터" : "모의";
+  // 평소엔 숨김 — 공유 링크로 들어왔거나 실데이터 연결 실패(모의 데이터)일 때만
+  b.hidden = live && !state.shared;
+  b.className = "badge";
+  b.textContent = state.shared ? "공유 링크" : "모의";
   b.title = status.fellBack ? `실데이터 연결 실패: ${status.error}` : "";
 }
 

@@ -104,6 +104,11 @@ await ev(`document.getElementById('decide').close()`);
 await send("Page.navigate", { url: link }); await until(`document.querySelectorAll('.row').length > 0`); await sleep(800);
 const sh = await ev(`({ title: document.getElementById('resultCount').textContent, rows: document.querySelectorAll('.row').length })`);
 check("sharedLink", sh.rows === 2 && sh.title.includes("공유"), sh);
+await load(URL0);
+const candZero = await ev(`getComputedStyle(document.getElementById('candBtn')).display === 'none'`);
+await ev(`document.querySelector('.row .add').click()`); await sleep(200);
+const candOne = await ev(`({ shown: getComputedStyle(document.getElementById('candBtn')).display !== 'none', text: document.getElementById('candBtn').textContent.trim() })`);
+check("candButton", candZero && candOne.shown && candOne.text === "1곳 알리기", { candZero, candOne });
 
 // 8) 필터: 치킨만 → 적용
 await load(URL0);
@@ -225,7 +230,7 @@ await ev(`document.querySelector('#dayPicker .pk-cur').click()`); await sleep(30
 const dayOpts = await ev(`document.querySelectorAll('#dayPicker [data-k]').length`);
 await ev(`document.querySelector('#dayPicker [data-k="일"]').click()`);
 await until(`!document.getElementById('resultCount').textContent.includes('검색')`, 15000); await sleep(600);
-const sun = await ev(`({ cur: document.querySelector('#dayPicker .pk-cur').textContent.trim(), sub: document.getElementById('headSub').textContent })`);
+const sun = await ev(`({ cur: document.querySelector('#dayPicker .pk-cur').textContent.trim() })`);
 check("recommendWhy", why.length > 0 && why.every((w) => w.length > 0) && dayOpts === 8 && sun.cur === "일요일", { why, sun });
 
 // 17) 결과 0곳이어도 검색한 곳으로 지도 이동 (독도: 주변 반경에 매장 없음)
@@ -234,9 +239,9 @@ const c0 = await ev(`(() => { const c = window.__hp.map.getCenter(); return [c.l
 await ev(`(() => { const i = document.getElementById('loc'); i.focus(); i.value = ''; i.dispatchEvent(new Event('input')); })()`);
 await send("Input.insertText", { text: "독도" });
 await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" });
-await until(`document.getElementById('resultCount').textContent.startsWith('0곳')`, 20000); await sleep(1800);
+await until(`document.getElementById('resultCount').textContent.includes(' 0곳')`, 20000); await sleep(1800);
 const c1 = await ev(`(() => { const c = window.__hp.map.getCenter(); return [c.lat, c.lng]; })()`);
-check("emptyMoves", (await ev(`document.getElementById('resultCount').textContent`)).startsWith("0곳") && c1[1] > 131 && c1[0] > 37, { title: await ev(`document.getElementById('resultCount').textContent`), from: c0, to: c1 });
+check("emptyMoves", (await ev(`document.getElementById('resultCount').textContent`)).includes(" 0곳") && c1[1] > 131 && c1[0] > 37, { title: await ev(`document.getElementById('resultCount').textContent`), from: c0, to: c1 });
 await shot("13-empty-move");
 
 check("noErrors", errors.length === 0, errors.slice(0, 3));

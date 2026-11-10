@@ -615,3 +615,7 @@ body.previewing .area-btn { top: auto; bottom: calc(var(--pv-h) + 24px); }
 .mk.mini .mk-pin { color: var(--slate); }
 .mk.mini .mk-pin.g { border-color: var(--navy); color: var(--navy); }
 .dt-tile.g { color: var(--slate); background: linear-gradient(160deg, var(--bg), #eceef1); }
+.cand-btn:not([hidden]) { animation: pop-up 0.24s ease-out; }
+.sheet-head { padding-bottom: 10px; }
+.cand-btn { display: inline-flex; align-items: center; gap: 5px; }
+.cand-btn b { font-weight: 800; }
