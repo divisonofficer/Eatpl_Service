@@ -1,4 +1,4 @@
-import { parkLabel, corkLabel } from "./amenities-fmt.js";
+import { amenityStates } from "./amenities-fmt.js";
 export const hhmm = (t) => (t && t.length === 4 ? `${t.slice(0, 2)}:${t.slice(2)}` : "-");
 
 // 최초~최종 결제 시각이 하루를 거의 다 덮으면(예: 0600~0559) 24시간으로 표기
@@ -11,7 +11,20 @@ export const hours = (s) => {
   return `${hhmm(s.open)}~${hhmm(s.close)}`;
 };
 export const holiday = (s) => (s.holidays.length ? `${s.holidays.join("·")} 휴무` : "연중무휴");
-export const rankLabel = (s) => `상위 ${String(s.rank)}%`; // API 값 그대로 (0.04 → "0.04")
+export const rankLabel = (s) => `상위 ${String(s.rank)}%`; // API 값 그대로 (0.04 → "0.04") — 내부·정렬용
+
+// 화면 표기: 정확한 수치 대신 등급 배지. 30% 밖은 표시하지 않는다.
+const TIERS = [1, 3, 5, 10, 30];
+export function rankTier(rank) {
+  const r = Number(rank);
+  if (!Number.isFinite(r)) return null;
+  const t = TIERS.find((x) => r <= x);
+  return t ? { t, label: `상위 ${t}%` } : null;
+}
+export const tierHtml = (rank, prefix = "") => {
+  const x = rankTier(rank);
+  return x ? `<span class="tier t${x.t}">${prefix}${x.label}</span>` : "";
+};
 
 // "서울 종로구 종로 200-12 ,1층 (종로4가)" → "종로4가", 괄호 동명이 없으면 구 이름
 export function area(s) {
@@ -43,13 +56,11 @@ const ICON_OF = [
 ];
 export const catIcon = (c) => (ICON_OF.find(([re]) => re.test(c || "")) || [0, "utensils"])[1];
 
-const parkShort = (p) => parkLabel(p);
-const corkShort = (c) => corkLabel(c);
 
 export function buildMessage(list, { modeNoun, tone, link }) {
   const extra = (s) => {
-    const a = s.photo?.amenities || {};
-    return [a.room?.state === "yes" ? "룸" : "", a.parking ? parkShort(a.parking) : "", a.corkage && a.corkage.state !== "no" ? corkShort(a.corkage) : ""].filter(Boolean);
+    const st = amenityStates(s.amen || s.photo?.amenities || {});
+    return [st.room === "yes" ? "룸" : "", st.park === "yes" ? "주차 가능" : "", st.cork === "yes" ? "콜키지 가능" : ""].filter(Boolean);
   };
   const line = (s, i) => `${i + 1}) ${s.name} (${[catLabel(s.category), area(s), holiday(s), ...extra(s)].join(" · ")})`;
   // 1차·2차가 섞여 있으면 단계별로 묶는다

@@ -88,6 +88,16 @@ await ev(`document.querySelector('.nb-card [data-add-second]')?.click()`); await
 const dc = await ev(`({ items: document.querySelectorAll('.dc-item').length, msg: document.getElementById('message').value })`);
 const link = (dc.msg.match(/https?:\/\/\S+share=\S+/) || [])[0];
 check("decide", dc.items === 2 && /\[1차\][\s\S]*\[2차\]/.test(dc.msg) && link, { items: dc.items });
+// 단톡방 공유: navigator.share 를 가로채 데이터 형식 확인 (본문 + url 분리)
+const shared = await ev(`(async () => {
+  let got = null;
+  Object.defineProperty(navigator, 'share', { configurable: true, value: async (d) => { got = d; } });
+  Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => true });
+  document.getElementById('shareBtn').click();
+  await new Promise(r => setTimeout(r, 200));
+  return got && { title: got.title, url: got.url, textHasUrl: (got.text || '').includes('share='), textEnd: (got.text || '').slice(-12) };
+})()`);
+check("shareData", shared && /share=/.test(shared.url) && !shared.textHasUrl, shared);
 await ev(`document.getElementById('decide').close()`);
 
 // 7) 공유 링크로 진입
@@ -104,7 +114,7 @@ await ev(`[...document.querySelectorAll('.cat-tile')].find(b => b.textContent.tr
 await shot("06-filter");
 await ev(`document.getElementById('filterApply').click()`);
 await until(`!document.getElementById('resultCount').textContent.includes('검색 중')`); await sleep(800);
-const fl = await ev(`({ count: document.getElementById('filterCount').textContent, cats: [...new Set([...document.querySelectorAll('.row')].map(r => r.querySelector('.meta').textContent.split('·').map(x => x.trim())[1]))] })`);
+const fl = await ev(`({ count: document.getElementById('filterCount').textContent, cats: [...new Set([...document.querySelectorAll('.row')].map(r => { const m = r.querySelector('.meta').cloneNode(true); m.querySelectorAll('.tier,.dist').forEach(x => x.remove()); return m.textContent.split('·').map(x => x.trim()).filter(Boolean)[0]; }))] })`);
 check("filter", fl.count === "1" && fl.cats.length === 1 && fl.cats[0] === "치킨", fl);
 
 // 9) 현위치
@@ -119,7 +129,7 @@ await load(URL0);
 await ev(`document.querySelector('.row').click()`); await sleep(700);
 await ev(`document.querySelector('.pv-card [data-next]').click()`);
 await until(`document.getElementById('resultCount').textContent.includes('근처')`, 15000); await sleep(800);
-const ss = await ev(`({ tab: document.querySelector('#modeTabs [aria-selected=true]').textContent, title: document.getElementById('resultCount').textContent, walk: document.querySelector('.row .dist')?.textContent, origin: !!document.querySelector('.origin-mk') })`);
+const ss = await ev(`({ tab: document.querySelector('#modePicker .pk-cur').textContent.trim(), title: document.getElementById('resultCount').textContent, walk: document.querySelector('.row .dist')?.textContent, origin: !!document.querySelector('.origin-mk') })`);
 check("secondStop", ss.tab === "2차" && /도보/.test(ss.walk || "") && ss.origin, ss); await shot("08-second");
 
 // 11) 검색어 추천
@@ -143,16 +153,46 @@ check("enterBeforeSuggest", await ev(`document.getElementById('resultCount').tex
 await load(URL0); await sleep(1500);
 const btnBefore = await ev(`document.getElementById('areaBtn').hidden`);
 await send("Input.dispatchMouseEvent", { type: "mousePressed", x: 200, y: 300, button: "left", clickCount: 1 });
-for (let i = 1; i <= 12; i++) { await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 200 - i * 14, y: 300 + i * 4, button: "left", buttons: 1 }); await sleep(20); }
-await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: 32, y: 348, button: "left", clickCount: 1 });
+for (let i = 1; i <= 12; i++) { await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 200 - i * 15, y: 300 - i * 12, button: "left", buttons: 1 }); await sleep(20); }
+await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: 20, y: 156, button: "left", clickCount: 1 });
 await until(`!document.getElementById('areaBtn').hidden`, 4000);
 const shown = await ev(`!document.getElementById('areaBtn').hidden`);
+const btnPos = await ev(`(() => { const r = document.getElementById('areaBtn').getBoundingClientRect(); return { y: Math.round(r.top), sheetTop: Math.round(document.getElementById('sheet').getBoundingClientRect().top) }; })()`);
 await shot("10-area-btn");
 await ev(`document.getElementById('areaBtn').click()`);
 await until(`document.getElementById('resultCount').textContent.includes('일대')`, 20000); await sleep(800);
 const area = await ev(`(() => { const m = document.querySelector('#map')._leaflet_id; return { title: document.getElementById('resultCount').textContent, rows: document.querySelectorAll('.row').length, hidden: document.getElementById('areaBtn').hidden }; })()`);
-check("searchThisArea", btnBefore && shown && area.title.includes("일대") && area.hidden, area);
+check("searchThisArea", btnBefore && shown && area.title.includes("일대") && area.hidden && btnPos.y > btnPos.sheetTop - 70 && btnPos.y < btnPos.sheetTop, { ...area, btnPos });
+// 확대만 하면(검색 영역 안을 보는 것) 버튼 없음
+await ev(`document.querySelector('.leaflet-control-zoom-in')?.click() || document.querySelector('#map')`);
+await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 195, y: 300, deltaX: 0, deltaY: -600 }); await sleep(1200);
+check("zoomInNoButton", await ev(`document.getElementById('areaBtn').hidden`));
 await shot("11-area");
+
+// 14) 모드·인원 펼침 버튼: 접힘 → 펼침(4개/5개) → 선택 → 접힘 + 재검색
+await load(URL0);
+await ev(`document.querySelector('#modePicker .pk-cur').click()`); await sleep(300);
+const modeOpen = await ev(`document.querySelectorAll('#modePicker [data-k]').length`);
+await shot("12-picker-open");
+await ev(`document.querySelector('#modePicker [data-k=lunch]').click()`);
+await until(`!document.getElementById('resultCount').textContent.includes('검색')`, 15000); await sleep(500);
+const modeAfter = await ev(`({ cur: document.querySelector('#modePicker .pk-cur')?.textContent.trim(), closed: !document.getElementById('modePicker').classList.contains('open'), title: document.getElementById('resultCount').textContent })`);
+await ev(`document.querySelector('#sizePicker .pk-cur').click()`); await sleep(300);
+const sizeOpen = await ev(`document.querySelectorAll('#sizePicker [data-k]').length`);
+await ev(`document.querySelector('#sizePicker [data-k="2"]').click()`); await sleep(400);
+const sizeCur = await ev(`document.querySelector('#sizePicker .pk-cur')?.textContent.trim()`);
+check("pickers", modeOpen === 4 && modeAfter.cur === "점심 회식" && modeAfter.closed && sizeOpen === 5 && sizeCur === "둘이서", { modeOpen, modeAfter, sizeOpen, sizeCur });
+
+// 15) 룸·주차 동시 필터: 켜면 목록이 '있어요' 매장으로 줄고, 끄면 원래대로
+await load(URL0); await until(`!document.querySelector('.tile.skel')`, 15000); await sleep(800);
+const n0 = await ev(`document.querySelectorAll('.row').length`);
+await ev(`document.querySelector('[data-pref=room]').click()`); await sleep(300);
+await ev(`document.querySelector('[data-pref=park]').click()`);
+await until(`!document.getElementById('resultCount').textContent.includes('확인 중')`, 30000); await sleep(800);
+const f = await ev(`({ title: document.getElementById('resultCount').textContent, rows: document.querySelectorAll('.row').length, allOn: [...document.querySelectorAll('.row')].every(r => r.querySelectorAll('.am-b.on').length >= 2) })`);
+await ev(`document.querySelector('[data-pref=room]').click()`); await ev(`document.querySelector('[data-pref=park]').click()`); await sleep(600);
+const n1 = await ev(`document.querySelectorAll('.row').length`);
+check("prefFilter", f.title.includes("룸·주차") && f.rows <= n0 && f.allOn && n1 === n0, { n0, ...f, n1 });
 
 check("noErrors", errors.length === 0, errors.slice(0, 3));
 const failed = Object.entries(R).filter(([, v]) => !v.ok);

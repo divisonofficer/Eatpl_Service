@@ -1,12 +1,12 @@
 import { CONFIG } from "./config.js";
-import { search, status, kakaoPlace, kakaoSearchUrl, storePhotos, regionOf } from "./api.js";
+import { search, status, kakaoPlace, kakaoSearchUrl, storePhotos, storeAmenities, regionOf } from "./api.js";
 import { MODES, ALL_CATEGORIES, applyMode } from "./modes.js";
-import { hours, holiday, rankLabel, area, catLabel, catIcon, buildMessage } from "./format.js";
+import { hours, holiday, rankTier, tierHtml, area, catLabel, catIcon, buildMessage } from "./format.js";
 import { createSheet } from "./sheet.js";
 import { shareLink, readShare, isKakaoInApp, kakaoExternalUrl } from "./share.js";
 import { attachSuggest, resolveQuery } from "./suggest.js";
 import { svg } from "./icons.js";
-import { roomLabel, corkLabel, parkLabel, fmtWon } from "./amenities-fmt.js";
+import { amenityStates, AMENITY_TEXT } from "./amenities-fmt.js";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -17,7 +17,8 @@ const state = {
   categories: new Set(MODES.dinner.categories),
   headcount: 12,
   prefs: new Set(), // 우선 보기: room | park | cork
-  stores: [],
+  all: [], // 검색 결과 전체 (정렬됨)
+  stores: [], // 화면에 보이는 목록 = all 에 룸·주차·콜키지 필터 적용
   total: 0,
   candidates: [],
   extra: new Map(), // 목록 밖에서 온 매장 (근처 2차 추천 등)
@@ -28,7 +29,7 @@ const state = {
   radius: 0,
   tone: "formal",
 };
-const storeById = (id) => state.stores.find((s) => s.id === id) || state.candidates.find((s) => s.id === id) || state.extra.get(id);
+const storeById = (id) => state.stores.find((s) => s.id === id) || state.all.find((s) => s.id === id) || state.candidates.find((s) => s.id === id) || state.extra.get(id);
 const inCand = (id) => state.candidates.some((c) => c.id === id);
 
 // 정적 버튼 아이콘
@@ -61,69 +62,64 @@ function thumbHtml(s, size = 22, label = true) {
   return `<span class="tile${s.group ? " g" : ""}">${svg(catIcon(s.category), size)}${label ? `<small>${esc(catLabel(s.category))}</small>` : ""}</span>`;
 }
 
-function storeMarkerHtml(s, i) {
+function storeMarkerHtml(s, i, more = 0) {
   const active = s.id === state.activeId;
-  if (!active && i >= LABELED) return `<div class="mk-dot${s.group ? " g" : ""}"></div>`;
+  const moreBadge = more > 0 ? `<b class="mk-more" data-more>+${more}</b>` : "";
+  if (!active && i >= LABELED) return `<div class="mk mini"><div class="mk-pin${s.group ? " g" : ""}"><span class="mk-in">${svg(catIcon(s.category), 12)}</span></div>${moreBadge}</div>`;
   const photo = hi(s.photo?.pin?.thumb);
   const inner = photo ? `<img src="${esc(photo)}" alt="" referrerpolicy="no-referrer" />` : svg(catIcon(s.category), 18);
   const pop = active
     ? `<div class="mk-pop" data-pop>
         <span class="mk-pop-th">${thumbHtml(s, 18, false)}</span>
-        <span class="mk-pop-t"><b>${esc(s.name)}</b><span><em>${esc(rankLabel(s))}</em> · ${esc(catLabel(s.category))}</span></span>
+        <span class="mk-pop-t"><b>${esc(s.name)}</b><span>${tierHtml(s.rank)} ${esc(catLabel(s.category))}</span>${amenityBadges(s, 12, false)}</span>
         ${svg("chevron", 16)}
       </div>`
     : "";
   return `<div class="mk${active ? " is-active" : ""}">
     ${pop}${active ? '<i class="mk-halo"></i>' : ""}
     <div class="mk-pin${(s.order ?? i) < HOT ? " hot" : ""}${photo ? " has-photo" : ""}"><span class="mk-in">${inner}</span></div>
-    <span class="mk-rk">${esc(String(s.rank))}%</span>
+    ${rankTier(s.rank) ? `<span class="mk-rk t${rankTier(s.rank).t}">${rankTier(s.rank).label}</span>` : ""}${moreBadge}
   </div>`;
 }
 
-// 격자 클러스터 (결정론): 같은 화면 칸(52px)에 들어온 매장은 숫자 원으로 묶는다. 선택한 매장은 항상 단독.
-const CELL = 52;
+// 핀 묶기 (결정론): 우선순위(선택 > 매출 순위) 순으로 놓으며, 이미 놓인 핀과 화면 거리가 가까우면 그 핀에 합친다.
+// 대표 핀은 그대로 보이고 '+n' 배지(누르면 묶음 확대). 확대 18 이상이면 묶지 않는다.
+const PIN_R = { big: 25, mini: 16 }; // 화면상 핀 반경(px) — 물방울이 기준점 위로 그려지는 만큼 여유
 function renderMarkers() {
   layer.clearLayers();
   markers.clear();
   const z = map.getZoom();
-  const buckets = new Map();
-  state.stores.forEach((s, i) => {
-    let key = `solo:${s.id}`;
-    if (s.id !== state.activeId && z < 17) {
-      const p = map.project([s.lat, s.lng], z);
-      key = `${Math.floor(p.x / CELL)}:${Math.floor(p.y / CELL)}`;
-    }
-    if (!buckets.has(key)) buckets.set(key, []);
-    buckets.get(key).push([s, i]);
-  });
-  for (const group of buckets.values()) {
-    if (group.length === 1) {
-      const [s, i] = group[0];
-      const m = L.marker([s.lat, s.lng], {
-        icon: L.divIcon({ className: "", html: storeMarkerHtml(s, i), iconSize: null, iconAnchor: [0, 0] }),
-        title: s.name,
-        zIndexOffset: s.id === state.activeId ? 100000 : i < LABELED ? 5000 - i * 20 : 0,
+  const items = state.stores
+    .map((s, i) => ({ s, i, p: map.project([s.lat, s.lng], z), big: s.id === state.activeId || i < LABELED }))
+    .sort((a, b) => (a.s.id === state.activeId ? -1 : a.i) - (b.s.id === state.activeId ? -1 : b.i));
+  const seeds = [];
+  for (const it of items) {
+    const r = it.big ? PIN_R.big : PIN_R.mini;
+    const host = z < 19 && it.s.id !== state.activeId ? seeds.find((sd) => sd.p.distanceTo(it.p) < sd.r + r + 4) : null;
+    if (host) host.members.push(it);
+    else seeds.push({ ...it, r, members: [it] });
+  }
+  for (const sd of seeds) {
+    const { s, i } = sd;
+    const more = sd.members.length - 1;
+    const m = L.marker([s.lat, s.lng], {
+      icon: L.divIcon({ className: "", html: storeMarkerHtml(s, i, more), iconSize: null, iconAnchor: [0, 0] }),
+      title: more ? `${s.name} 외 ${more}곳` : s.name,
+      zIndexOffset: s.id === state.activeId ? 100000 : sd.big ? 5000 - i * 20 : 1000 - i,
+    })
+      .on("click", (e) => {
+        const t = e.originalEvent?.target;
+        if (t?.closest?.("[data-more]")) {
+          const pts = sd.members.map(({ s: v }) => [v.lat, v.lng]);
+          return auto(() => map.fitBounds(L.latLngBounds(pts), { ...fitPadding(), maxZoom: Math.min(z + 3, 18) }));
+        }
+        const pop = t?.closest?.("[data-pop]");
+        if (pop) return openDetail(s, pop);
+        select(s.id, "map");
       })
-        .on("click", (e) => {
-          const pop = e.originalEvent?.target?.closest?.("[data-pop]");
-          if (pop) return openDetail(s, pop);
-          select(s.id, "map");
-        })
-        .addTo(layer);
-      markers.set(s.id, m);
-    } else {
-      const pts = group.map(([s]) => [s.lat, s.lng]);
-      const lat = pts.reduce((a, p) => a + p[0], 0) / pts.length;
-      const lng = pts.reduce((a, p) => a + p[1], 0) / pts.length;
-      const hot = group.some(([s, i]) => (s.order ?? i) < HOT);
-      const size = Math.min(52, 30 + group.length * 3);
-      L.marker([lat, lng], {
-        icon: L.divIcon({ className: "", html: `<div class="mk-cluster${hot ? " hot" : ""}" style="--s:${size}px">${group.length}</div>`, iconSize: null, iconAnchor: [0, 0] }),
-        zIndexOffset: 3000,
-      })
-        .on("click", () => map.fitBounds(L.latLngBounds(pts), { ...fitPadding(), maxZoom: Math.min(z + 3, 18) }))
-        .addTo(layer);
-    }
+      .addTo(layer);
+    m._members = sd.members.length;
+    markers.set(s.id, m);
   }
 }
 let markerRaf = 0;
@@ -175,17 +171,49 @@ const sheet = createSheet({
 });
 
 // ---------- 모드 탭 ----------
-function renderTabs() {
-  $("modeTabs").innerHTML = Object.entries(MODES)
-    .map(([k, m]) => `<button type="button" role="tab" data-mode="${k}" aria-selected="${k === state.mode}">${m.label}</button>`)
-    .join("");
+// ---------- 상단 펼침 버튼 (모드·인원) ----------
+// 접힌 상태: 현재 값 하나 + ▾ / 누르면 그 자리에서 선택지가 펼쳐지고, 고르면 접힌다. 한 번에 하나만.
+let openPicker = null;
+function pickerHtml(id, items, cur) {
+  if (openPicker === id)
+    return items.map((it) => `<button type="button" role="radio" data-k="${it.k}" aria-checked="${it.k === cur.k}">${it.label}${it.sub ? `<small>${it.sub}</small>` : ""}</button>`).join("");
+  return `<button type="button" class="pk-cur" data-toggle aria-expanded="false">${cur.label}${svg("down", 14)}</button>`;
 }
-$("modeTabs").addEventListener("click", (e) => {
-  const k = e.target.closest("[data-mode]")?.dataset.mode;
-  if (!k || k === state.mode) return;
-  if (state.origin?.kind === "store") clearOrigin();
-  setMode(k);
+function renderTabs() {
+  const modes = Object.entries(MODES).map(([k, m]) => ({ k, label: m.label }));
+  $("modePicker").innerHTML = pickerHtml("mode", modes, modes.find((m) => m.k === state.mode));
+  const sizes = SIZES.map((z) => ({ k: String(z.n), label: z.label, sub: z.sub }));
+  const cur = sizeOf(state.headcount);
+  $("sizePicker").innerHTML = pickerHtml("size", sizes, { k: String(cur.n), label: cur.label });
+  $("modePicker").classList.toggle("open", openPicker === "mode");
+  $("sizePicker").classList.toggle("open", openPicker === "size");
+  $("quick").classList.toggle("has-open", !!openPicker);
+}
+function onPicker(id, e) {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.toggle !== undefined) {
+    openPicker = openPicker === id ? null : id;
+    return renderTabs();
+  }
+  const k = b.dataset.k;
+  openPicker = null;
+  if (id === "mode") {
+    if (k === state.mode) return renderTabs();
+    if (state.origin?.kind === "store") clearOrigin();
+    setMode(k);
+  } else {
+    if (Number(k) === state.headcount) return renderTabs();
+    state.headcount = Number(k);
+    renderTabs();
+  }
   run();
+}
+$("modePicker").addEventListener("click", (e) => onPicker("mode", e));
+$("sizePicker").addEventListener("click", (e) => onPicker("size", e));
+// 바깥 클릭이면 접기 — 버튼을 다시 그리면 e.target 이 떨어져 나가므로 이벤트 경로로 판정
+document.addEventListener("click", (e) => {
+  if (openPicker && !e.composedPath().some((el) => el.classList?.contains("picker"))) (openPicker = null), renderTabs();
 });
 function setMode(k) {
   state.mode = k;
@@ -206,13 +234,11 @@ function renderCatGrid() {
     (c) => `<button type="button" class="cat-tile" data-cat="${esc(c)}" aria-pressed="${pending.cats.has(c)}">
       ${svg(catIcon(c), 22)}<span>${esc(catLabel(c))}</span></button>`
   ).join("");
-  $("sizeSeg").innerHTML = SIZES.map(
-    (z) => `<button type="button" data-size="${z.n}" aria-pressed="${sizeOf(pending.hc).n === z.n}"><b>${z.label}</b><span>${z.sub}</span></button>`
-  ).join("");
+
 
 }
 $("filterBtn").addEventListener("click", () => {
-  pending = { cats: new Set(state.categories), hc: state.headcount };
+  pending = { cats: new Set(state.categories) };
   renderCatGrid();
   $("filterDialog").showModal();
 });
@@ -222,10 +248,7 @@ $("catGrid").addEventListener("click", (e) => {
   pending.cats.has(c) ? pending.cats.delete(c) : pending.cats.add(c);
   renderCatGrid();
 });
-$("sizeSeg").addEventListener("click", (e) => {
-  const n = e.target.closest("[data-size]")?.dataset.size;
-  if (n) (pending.hc = Number(n)), renderCatGrid();
-});
+
 // 우선 보기 (메인 화면): 누르면 현재 목록만 다시 정렬 — 재검색·API 호출 없음
 function renderPrefs() {
   $("prefRow").innerHTML = PREFS.map(
@@ -239,23 +262,55 @@ $("prefRow").addEventListener("click", (e) => {
   renderPrefs();
   resort();
 });
+// 룸·주차·콜키지 필터: '있어요'로 확인된 매장만 (여러 개면 모두 만족). 미확인 매장은 확인을 시작하고 오는 대로 반영.
+function applyPrefs() {
+  const on = [...state.prefs];
+  state.stores = on.length ? state.all.filter((s) => (s.amen || s.photo) && on.every((k) => PREF_OK[k](amenOf(s)))) : state.all;
+  if (state.activeId && !state.stores.some((s) => s.id === state.activeId)) closePreview(false);
+}
+// 정밀 확인 범위: 상위 30곳 (호출량 제한 — 매장당 3회, 1일 캐시)
+const AMEN_SCOPE = 30;
+const amenOf = (s) => s.amen || s.photo?.amenities || {};
+function prefsPending() {
+  return state.prefs.size ? state.all.slice(0, AMEN_SCOPE).filter((s) => !s.amen && !s.amenDone).length : 0;
+}
+async function loadAmenities(s) {
+  if (!s || s.amen || s.amenLoading) return;
+  s.amenLoading = true;
+  const a = await storeAmenities(s);
+  s.amenLoading = false;
+  s.amenDone = true;
+  if (a) s.amen = a;
+  refreshStore(s);
+}
 function resort() {
-  const has = (s) => !!(s.photo?.pin || s.photo?.images?.length);
-  const pref = (s) => [...state.prefs].filter((k) => PREF_OK[k](s.photo?.amenities || {})).length;
-  state.stores = [...state.stores].sort((a, b) => pref(b) - pref(a) || has(b) - has(a) || a.order - b.order);
+  if (state.prefs.size) state.all.slice(0, AMEN_SCOPE).forEach(loadAmenities);
+  applyPrefs();
   $("results").scrollTop = 0;
   renderResults();
   renderMarkers();
   if (state.preview) openPreview();
 }
+let reapplyT = 0;
+function scheduleReapply() {
+  clearTimeout(reapplyT);
+  reapplyT = setTimeout(() => {
+    const before = state.stores.map((s) => s.id).join();
+    applyPrefs();
+    if (state.stores.map((s) => s.id).join() !== before || !prefsPending()) {
+      renderResults();
+      renderMarkers();
+      if (state.preview) openPreview();
+    }
+  }, 350);
+}
 $("filterReset").addEventListener("click", () => {
-  pending = { cats: new Set(MODES[state.mode].categories), hc: 12 };
+  pending = { cats: new Set(MODES[state.mode].categories) };
   renderCatGrid();
 });
 $("filterApply").addEventListener("click", () => {
   if (!pending.cats.size) return toast("업종을 선택하세요");
   state.categories = pending.cats;
-  state.headcount = pending.hc;
   $("filterDialog").close();
   renderFilterCount();
   run();
@@ -305,12 +360,14 @@ async function run() {
     const all = applyMode(state.mode, raw, { headcount: state.headcount, groupThreshold: CONFIG.groupThreshold });
     const near = state.origin?.kind === "area" ? inArea(all, state.origin) : state.origin ? nearby(all, state.origin) : all;
     state.total = near.length;
-    state.stores = near.slice(0, CONFIG.maxPins);
-    state.stores.forEach((s, i) => (s.order = i));
+    state.all = near.slice(0, CONFIG.maxPins);
+    state.all.forEach((s, i) => (s.order = i));
+    state.stores = state.all;
     if (status.fellBack) toast("실데이터 연결 실패 · 모의 데이터");
   } catch (err) {
     if (my !== seq) return;
     console.error(err);
+    state.all = [];
     state.stores = [];
     state.total = 0;
     toast(err.message || "불러오기 실패");
@@ -330,16 +387,19 @@ async function run() {
 const PHOTO_N = 24;
 const PHOTO_WAIT = 3000;
 async function photosFirst(my) {
-  const head = state.stores.slice(0, PHOTO_N);
+  const head = state.all.slice(0, PHOTO_N);
   head.forEach((s) => s.photo === undefined && (s.photoLoading = true));
+  applyPrefs();
   renderResults(); // 스켈레톤
   const all = Promise.all(head.map(loadPhotos));
   await Promise.race([all, new Promise((r) => setTimeout(r, PHOTO_WAIT))]);
   if (my !== seq) return;
   const has = (s) => !!(s.photo?.pin || s.photo?.images?.length);
-  const pref = (s) => [...state.prefs].filter((k) => PREF_OK[k](s.photo?.amenities || {})).length;
+  const pref = (s) => [...state.prefs].filter((k) => PREF_OK[k](amenOf(s))).length;
   const sorted = [...head].sort((a, b) => pref(b) - pref(a) || has(b) - has(a) || a.order - b.order);
-  state.stores = [...sorted, ...state.stores.slice(PHOTO_N)];
+  state.all = [...sorted, ...state.all.slice(PHOTO_N)];
+  if (state.prefs.size) state.all.slice(0, AMEN_SCOPE).forEach(loadAmenities);
+  applyPrefs();
   head.forEach((s) => s.photo === undefined || delete s.photoLoading);
   renderResults();
   renderMarkers();
@@ -353,23 +413,25 @@ function rowHtml(s) {
     <div class="thumb">${thumbHtml(s)}</div>
     <div class="info">
       <div class="name">${esc(s.name)}</div>
-      <div class="meta">${dist}<span class="rk">${esc(rankLabel(s))}</span> · ${esc(catLabel(s.category))} · ${esc(area(s))}</div>
+      <div class="meta">${dist}${tierHtml(s.rank)}${rankTier(s.rank) ? " " : ""}${esc(catLabel(s.category))} · ${esc(area(s))}</div>
       <div class="meta">${esc(hours(s))} · ${esc(holiday(s))}</div>
-      ${tagsHtml(s)}
+      ${tagsHtml(s)}${amenityBadges(s)}
     </div>
     ${addBtn(s, "add")}
   </li>`;
 }
 const tagsHtml = (s) => {
-  const a = s.photo?.amenities || {};
-  const am = [
-    a.room?.state === "yes" ? `<em class="am">${esc(roomLabel(a.room).replace(/^룸 · /, "룸 · "))}</em>` : "",
-    a.parking ? `<span class="am${a.parking.state === "no" || a.parking.state === "limited" ? " neg" : ""}">${esc(parkLabel(a.parking))}</span>` : "",
-    a.corkage && a.corkage.state !== "no" ? `<span class="am">${esc(corkLabel(a.corkage))}</span>` : "",
-  ].filter(Boolean);
-  const base = [s.group ? "<em>회식 적합</em>" : "", ...am, s.local && am.length < 2 ? "<span>동네 맛집</span>" : ""].filter(Boolean);
-  return base.length ? `<div class="tags">${base.slice(0, 4).join("")}</div>` : "";
+  const t = [s.group ? "<em>회식 적합</em>" : "", s.local ? "<span>동네 맛집</span>" : ""].filter(Boolean);
+  return t.length ? `<div class="tags">${t.join("")}</div>` : "";
 };
+// 룸·주차·콜키지 아이콘 배지: 있으면 색, 아니면(없음·미확인) 회색
+const AM_ICON = { room: ["door", "룸"], park: ["parking", "주차"], cork: ["wine", "콜키지"] };
+function amenityBadges(s, size = 14, labels = true) {
+  const st = amenityStates(amenOf(s));
+  return `<div class="am-badges">${Object.entries(AM_ICON)
+    .map(([k, [ic, label]]) => `<span class="am-b${st[k] === "yes" ? " on" : ""}" title="${AMENITY_TEXT[k][st[k]]}">${svg(ic, size)}${labels ? label : ""}</span>`)
+    .join("")}</div>`;
+}
 
 // 인원 프리셋 (대표 인원 = 필터 계산용, 10명 이상이면 회식 적합만)
 const SIZES = [
@@ -381,30 +443,23 @@ const SIZES = [
 ];
 const sizeOf = (hc) => [...SIZES].reverse().find((z) => hc >= z.n) || SIZES[0];
 const PREFS = [
-  { k: "room", label: "룸", icon: "users" },
-  { k: "park", label: "주차", icon: "route" },
-  { k: "cork", label: "콜키지", icon: "cocktail" },
+  { k: "room", label: "룸", icon: "door" },
+  { k: "park", label: "주차", icon: "parking" },
+  { k: "cork", label: "콜키지", icon: "wine" },
 ];
 const PREF_OK = {
   room: (a) => a.room?.state === "yes",
-  park: (a) => ["valet", "free", "yes"].includes(a.parking?.state),
+  park: (a) => ["valet", "free", "yes", "limited"].includes(a.parking?.state),
   cork: (a) => ["free", "paid", "yes"].includes(a.corkage?.state),
 };
 
-// 상세 화면 편의 정보 줄 (블로그 언급 근거 + 출처)
+// 상세 화면 편의 정보: 있어요 / 없어요 / 미확인 (+ 금액이 있으면 작게)
 function amenityRows(s) {
-  const a = s.photo?.amenities;
-  if (s.photo === undefined) return `<li class="am-loading">${svg("users", 20)}<div><b>룸·주차·콜키지 확인 중…</b></div></li>`;
-  const src = (x) => (x?.sources?.[0] ? ` · <a href="${esc(x.sources[0])}" target="_blank" rel="noopener nofollow">출처</a>` : "");
-  const note = (x) => `블로그 ${x.count}건 언급${x.mixed ? " · 블로그마다 다름" : ""}${src(x)}`;
-  const rows = [];
-  if (a?.room) rows.push(`<li>${svg("users", 20)}<div><b>${esc(roomLabel(a.room))}</b><span>${note(a.room)}</span></div></li>`);
-  else rows.push(`<li class="dim">${svg("users", 20)}<div><b>룸 정보 없음</b><span>블로그 언급 없음 · 매장 문의</span></div></li>`);
-  rows.push(
-    `<li${a?.parking ? "" : ' class="dim"'}>${svg("route", 20)}<div><b>${a?.parking ? esc(parkLabel(a.parking)) : "주차 정보"}</b><span>${a?.parking ? note(a.parking) + " · " : ""}<a href="#" data-eatpl="${esc(s.id)}">정확한 주차 정보는 잇플에서</a></span></div></li>`
-  );
-  if (a?.corkage) rows.push(`<li>${svg("cocktail", 20)}<div><b>${esc(corkLabel(a.corkage))}</b><span>${note(a.corkage)}</span></div></li>`);
-  return rows.join("");
+  if (!s.amen && !s.amenDone) return `<li class="am-loading">${svg("door", 20)}<div><b>룸·주차·콜키지 확인 중…</b></div></li>`;
+  const st = amenityStates(amenOf(s));
+  const row = (k, note) =>
+    `<li class="am-row ${st[k]}">${svg(AM_ICON[k][0], 20)}<div><b>${AMENITY_TEXT[k][st[k]]}</b>${note ? `<span>${esc(note)}</span>` : ""}</div></li>`;
+  return row("room", st.roomNote) + row("park", st.parkNote) + row("cork", st.corkNote);
 }
 function addBtn(s, cls) {
   const on = inCand(s.id);
@@ -423,15 +478,22 @@ function renderResults() {
         : o.kind === "area"
           ? `${o.name} 일대`
           : `${o.kind === "place" ? o.name : o.dong || "내 주변"} ${fmtDist(state.radius)}`;
-  const n = state.total > state.stores.length ? `${state.total}곳(상위 ${state.stores.length})` : `${state.stores.length}곳`;
-  $("resultCount").textContent = `${n} · ${where}`;
+  const on = PREFS.filter((p) => state.prefs.has(p.k)).map((p) => p.label);
+  const pend = prefsPending();
+  const n = on.length
+    ? `${state.stores.length}곳`
+    : state.total > state.stores.length ? `${state.total}곳(상위 ${state.stores.length})` : `${state.stores.length}곳`;
+  $("resultCount").textContent = `${n} · ${where}${on.length ? ` · ${on.join("·")}` : ""}${pend ? ` · 확인 중 ${pend}` : ""}`;
   renderStatus();
-  $("results").innerHTML = state.stores.length ? state.stores.map(rowHtml).join("") : `<li class="empty">결과 없음</li>`;
+  $("results").innerHTML = state.stores.length
+    ? state.stores.map(rowHtml).join("")
+    : `<li class="empty">${state.prefs.size ? (prefsPending() ? "확인 중…" : "조건에 맞는 매장이 없어요") : "결과 없음"}</li>`;
 }
 function refreshStore(s) {
+  if (state.prefs.size) scheduleReapply();
   // 사진 로드·후보 변경 후 해당 매장이 보이는 곳만 다시 그린다
   const i = state.stores.indexOf(s);
-  if (i >= 0 && markers.has(s.id)) markers.get(s.id).setIcon(L.divIcon({ className: "", html: storeMarkerHtml(s, i), iconSize: null, iconAnchor: [0, 0] }));
+  if (i >= 0 && markers.has(s.id)) markers.get(s.id).setIcon(L.divIcon({ className: "", html: storeMarkerHtml(s, i, (markers.get(s.id)._members || 1) - 1), iconSize: null, iconAnchor: [0, 0] }));
   const li = document.querySelector(`.row[data-id="${CSS.escape(s.id)}"]`);
   if (li) li.outerHTML = rowHtml(s);
   const card = document.querySelector(`.pv-card[data-id="${CSS.escape(s.id)}"]`);
@@ -472,8 +534,9 @@ function pvCard(s) {
       <div class="pv-thumb">${thumbHtml(s, 26)}</div>
       <div class="pv-info">
         <h3>${esc(s.name)}</h3>
-        <div class="pv-sub"><span class="rk-pill">${esc(rankLabel(s))}</span><span>${esc(catLabel(s.category))}</span><span>${esc(area(s))}</span>${dist}</div>
+        <div class="pv-sub">${tierHtml(s.rank)}<span>${esc(catLabel(s.category))}</span><span>${esc(area(s))}</span>${dist}</div>
         <div class="pv-meta">${svg("clock", 14)} ${esc(hours(s))} · ${esc(holiday(s))}</div>
+        ${amenityBadges(s)}
       </div>
       <span class="pv-go">${svg("chevron", 18)}</span>
     </div>
@@ -582,6 +645,7 @@ function openDetail(s, srcEl) {
   // 열린 뒤 크기 확정 → 미니 지도 재계산
   requestAnimationFrame(() => detailMap?.invalidateSize().setView([s.lat, s.lng], 16));
   loadPhotos(s);
+  loadAmenities(s);
   resolveKakao(s);
 }
 function renderDetail(s, keepScroll = false) {
@@ -602,7 +666,7 @@ function renderDetail(s, keepScroll = false) {
     </div>
     <div class="dt-body">
       <h2>${esc(s.name)}</h2>
-      <div class="dt-sub"><span class="rk-pill">구내 ${esc(rankLabel(s))}</span><span class="rk-pill soft">전국 상위 ${esc(String(s.rankAll))}%</span><span>${esc(catLabel(s.category))}</span></div>
+      <div class="dt-sub">${tierHtml(s.rank, "구내 ")}${tierHtml(s.rankAll, "전국 ")}<span>${esc(catLabel(s.category))}</span></div>
       ${tagsHtml(s)}
       <ul class="dt-rows">
         <li>${svg("clock", 20)}<div><b>${esc(hours(s))}</b><span>${esc(holiday(s))} · 최근 1개월 결제 기준</span></div></li>
@@ -733,7 +797,7 @@ function renderDecide() {
         <div class="thumb">${thumbHtml(s)}</div>
         <div class="info">
           <div class="name">${s.stage ? `<i class="stage">${esc(s.stage)}</i>` : ""}${esc(s.name)}</div>
-          <div class="meta"><span class="rk">${esc(rankLabel(s))}</span> · ${esc(catLabel(s.category))} · ${esc(area(s))}</div>
+          <div class="meta">${tierHtml(s.rank)}${rankTier(s.rank) ? " " : ""}${esc(catLabel(s.category))} · ${esc(area(s))}</div>
         </div>
         <button type="button" class="icon-btn" data-rm="${esc(s.id)}" aria-label="빼기">${svg("close", 18)}</button>
       </li>`
@@ -750,7 +814,7 @@ function renderDecide() {
                     (s) => `<div class="nb-card">
               <div class="nb-thumb">${thumbHtml(s, 26)}</div>
               <b>${esc(s.name)}</b>
-              <span><em>${esc(rankLabel(s))}</em> · ${fmtWalk(s.dist)}</span>
+              <span>${tierHtml(s.rank)} ${fmtWalk(s.dist)}</span>
               <button type="button" class="btn btn-line btn-sm" data-add-second="${esc(s.id)}" ${c.length >= CONFIG.maxCandidates ? "disabled" : ""}>${svg("plus", 14)} 담기</button>
             </div>`
                   )
@@ -773,24 +837,36 @@ function renderDecide() {
     await copyText(decideMessage());
     toast("복사됨");
   };
-  $("shareBtn").onclick = () => shareText("회식 장소 후보", decideMessage());
+  // 공유 창에는 본문 + "위치·상세 보기:" 뒤에 링크(url)를 따로 — 대부분의 앱이 본문 끝에 링크를 붙여준다
+  $("shareBtn").onclick = () => {
+    const text = buildMessage(state.candidates, { modeNoun: MODES[state.mode].noun, tone: state.tone, link: null });
+    shareText("회식 장소 후보", `${text}\n\n위치·상세 보기:`, shareLink(state.candidates, state.mode));
+  };
 }
 
-async function shareText(title, text) {
+// 공유: Web Share API(안드로이드·iOS 공유 창). 링크는 url 로 따로 넘긴다(안드로이드가 본문 속 긴 링크보다 안정적).
+// 없거나(카카오톡 등 인앱 브라우저) 실패하면 문구+링크 복사로 대신하고 이유를 알린다.
+async function shareText(title, text, url) {
+  const data = url ? { title, text, url } : { title, text };
   if (navigator.share) {
-    try {
-      await navigator.share({ title, text });
-      return;
-    } catch (e) {
-      if (e.name === "AbortError") return;
+    if (!navigator.canShare || navigator.canShare(data)) {
+      try {
+        await navigator.share(data);
+        return;
+      } catch (e) {
+        if (e.name === "AbortError") return; // 사용자가 닫음
+        console.warn("share failed", e);
+        await copyText(url ? `${text}\n${url}` : text);
+        return toast(`공유 창을 열 수 없어 복사했어요 (${e.name})`);
+      }
     }
   }
-  await copyText(text);
-  toast("복사됨");
+  await copyText(url ? `${text}\n${url}` : text);
+  toast(isKakaoInApp() ? "복사됨 · 대화방에 붙여넣으세요" : "이 브라우저는 공유 창이 없어 복사했어요");
 }
 function shareStore(s) {
   if (!s) return;
-  shareText(s.name, `${s.name} (${catLabel(s.category)} · ${area(s)})\n${shareLink([s], state.mode)}`);
+  shareText(s.name, `${s.name} (${catLabel(s.category)} · ${area(s)})`, shareLink([s], state.mode));
 }
 async function copyText(text) {
   try {
@@ -901,19 +977,21 @@ function visibleBounds() {
 }
 const centerOf = (b) => ({ lat: (b.n + b.s) / 2, lng: (b.w + b.e) / 2 });
 function markSearched() {
-  const b = visibleBounds();
-  lastView = { ...centerOf(b), zoom: map.getZoom(), span: meters({ lat: b.n, lng: b.w }, { lat: b.s, lng: b.e }) };
+  lastView = visibleBounds();
   $("areaBtn").hidden = true;
 }
+// 지금 보이는 영역 중 마지막 검색 영역 밖 비율 (위경도 사각형 근사)
+function outsideRatio(cur, prev) {
+  const w = Math.max(0, Math.min(cur.e, prev.e) - Math.max(cur.w, prev.w));
+  const h = Math.max(0, Math.min(cur.n, prev.n) - Math.max(cur.s, prev.s));
+  const area = (cur.e - cur.w) * (cur.n - cur.s);
+  return area > 0 ? 1 - (w * h) / area : 0;
+}
+const OUTSIDE = 0.4; // 화면의 40% 이상이 검색 영역 밖이면 '이 지역에서 검색' 
 map.on("moveend", () => {
   if (performance.now() < autoUntil || searching) return markSearched();
   if (!lastView || state.shared) return;
-  const b = visibleBounds();
-  const moved = meters(lastView, centerOf(b));
-  const zoomed = Math.abs(map.getZoom() - lastView.zoom) >= 1;
-  if (moved > lastView.span * 0.25 || zoomed) {
-    $("areaBtn").hidden = false;
-  }
+  $("areaBtn").hidden = outsideRatio(visibleBounds(), lastView) < OUTSIDE;
 });
 function inArea(list, o) {
   state.radius = 0;
@@ -1050,7 +1128,7 @@ if (shared) {
   state.shared = true;
   if (MODES[shared.mode]) state.mode = shared.mode;
   renderTabs();
-  state.stores = shared.stores;
+  state.all = state.stores = shared.stores;
   state.stores.forEach((s, i) => (s.order = i));
   state.total = shared.stores.length;
   renderResults();

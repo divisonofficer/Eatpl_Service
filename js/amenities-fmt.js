@@ -31,3 +31,20 @@ export function parkLabel(p) {
     no: "주차 불가",
   }[p.state];
 }
+
+// ---------- 단순 표기 (있음 / 없음 / 미확인) ----------
+// 미확인 = 블로그 언급 없음. "없음"으로 확정하지 않는다 (상세에서만 구분, 목록은 회색으로 동일 처리)
+export function amenityStates(a = {}) {
+  const room = a.room ? (a.room.state === "yes" ? "yes" : "no") : "unknown";
+  const park = a.parking ? (["valet", "free", "yes", "limited"].includes(a.parking.state) ? "yes" : "no") : "unknown";
+  const cork = a.corkage ? (a.corkage.state === "no" ? "no" : "yes") : "unknown";
+  const roomNote = a.room?.state === "yes" ? [a.room.fee?.free ? "룸비 없음" : a.room.fee ? `룸비 ${a.room.fee.per ? a.room.fee.per + " " : ""}${fmtWon(a.room.fee.won)}` : "", a.room.minOrder ? `최소 ${fmtWon(a.room.minOrder.won)}` : ""].filter(Boolean).join(" · ") : "";
+  const corkNote = a.corkage?.state === "paid" ? fmtWon(a.corkage.won) : a.corkage?.state === "free" ? "무료" : "";
+  const parkNote = a.parking?.state === "valet" ? "발렛" : a.parking?.state === "free" ? (a.parking.hours ? `${a.parking.hours}시간 무료` : "무료") : a.parking?.state === "limited" ? "협소" : "";
+  return { room, park, cork, roomNote, corkNote, parkNote };
+}
+export const AMENITY_TEXT = {
+  room: { yes: "룸 있어요", no: "룸 없어요", unknown: "룸 미확인" },
+  park: { yes: "주차 가능", no: "주차 불가", unknown: "주차 미확인" },
+  cork: { yes: "콜키지 가능", no: "콜키지 불가", unknown: "콜키지 미확인" },
+};

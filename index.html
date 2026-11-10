@@ -21,10 +21,15 @@
       </button>
     </form>
     <ul id="suggest" class="suggest" role="listbox" hidden></ul>
-    <nav class="tabs" id="modeTabs" role="tablist"></nav>
-    <div id="prefRow" class="pref-row" role="group" aria-label="우선 보기"></div>
-    <button type="button" id="areaBtn" class="area-btn" hidden></button>
+    <div class="quick" id="quick">
+      <div class="picker" id="modePicker" role="radiogroup" aria-label="모드"></div>
+      <div class="picker" id="sizePicker" role="radiogroup" aria-label="인원"></div>
+      <span class="q-sep" aria-hidden="true"></span>
+      <div id="prefRow" class="pref-row" role="group" aria-label="룸·주차·콜키지"></div>
+    </div>
   </header>
+
+  <button type="button" id="areaBtn" class="area-btn" hidden></button>
 
   <!-- 지도 플로팅 버튼 -->
   <div class="fabs" id="fabs">
@@ -56,10 +61,6 @@
     <div class="bd-head">
       <strong>필터</strong>
       <button type="button" class="icon-btn" data-close aria-label="닫기"></button>
-    </div>
-    <div class="bd-section">
-      <div class="bd-label">인원</div>
-      <div id="sizeSeg" class="size-seg" role="radiogroup"></div>
     </div>
     <div class="bd-section">
       <div class="bd-label">업종</div>

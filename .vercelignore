@@ -6,3 +6,4 @@ docs/
 server.mjs
 .env
 .env.*
+.cache/

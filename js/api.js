@@ -180,3 +180,19 @@ export async function regionOf(lat, lng) {
   const sido = SIDO[b.region_1depth_name] || b.region_1depth_name;
   return { query: `${sido} ${b.region_2depth_name}`.trim(), dong: b.region_3depth_name, label: b.address_name };
 }
+
+// ---------- 룸·콜키지·주차 정밀 (/api/amenities — 상세 열기·필터 켤 때만) ----------
+const amenCache = new Map();
+export function storeAmenities(s) {
+  if (photosDisabled || status.source === "mock" || status.fellBack) return Promise.resolve(null);
+  if (amenCache.has(s.id)) return amenCache.get(s.id);
+  const q = new URLSearchParams({ name: s.name, addr: s.address, tel: s.tel || "", lat: s.lat.toFixed(6), lng: s.lng.toFixed(6) });
+  const p = slot()
+    .then(() => fetch(`/api/amenities?${q}`))
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => j?.amenities || null)
+    .catch(() => null)
+    .finally(release);
+  amenCache.set(s.id, p);
+  return p;
+}

@@ -400,10 +400,91 @@ dialog.eatpl[open] { display: flex; }
 .dt-rows li.am-loading { opacity: .6; }
 .dt-map .leaflet-control-attribution { font-size: 9px; padding: 0 4px; background: rgba(255,255,255,.7); }
 
-/* ---------- 이 지역에서 검색 ---------- */
+/* ---------- 이 지역에서 검색 (화면 아래, 시트·미리보기 바로 위) ---------- */
 .area-btn {
-  justify-self: center; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 16px; border: 0; border-radius: 99px;
-  background: #fff; color: var(--c); font-size: 14px; font-weight: 800; box-shadow: var(--shadow); animation: pop-up 0.24s ease-out;
+  position: fixed; z-index: 16; left: 50%; transform: translateX(-50%); top: calc(var(--sheet-top) - 54px);
+  display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 18px; border: 0; border-radius: 99px;
+  background: var(--ink); color: #fff; font-size: 14px; font-weight: 800; box-shadow: var(--shadow); white-space: nowrap;
+  animation: area-in 0.26s cubic-bezier(0.2, 0.8, 0.2, 1); transition: top 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+@keyframes area-in { from { opacity: 0; translate: 0 10px; } }
 .area-btn.busy .ic { animation: spin 1s linear infinite; }
-@media (min-width: 900px) { .area-btn { position: fixed; top: 20px; left: calc(var(--panel-w) + 32px + (100vw - var(--panel-w) - 32px) / 2); transform: translateX(-50%); } }
+body.previewing .area-btn { top: auto; bottom: calc(var(--pv-h) + 24px); }
+@media (min-width: 900px) {
+  .area-btn { top: auto; bottom: 28px; left: calc(var(--panel-w) + 32px + (100vw - var(--panel-w) - 32px) / 2); }
+  body.previewing .area-btn { bottom: calc(var(--pv-h) + 32px); }
+}
+
+/* ---------- 룸·주차·콜키지 배지 ---------- */
+.am-badges { display: flex; gap: 4px; margin-top: 6px; }
+.am-b { display: inline-flex; align-items: center; gap: 3px; height: 22px; padding: 0 7px 0 5px; border-radius: 6px; font-size: 11px; font-weight: 700; background: var(--bg); color: #c2c6cc; }
+.am-b .ic { width: 14px; height: 14px; }
+.am-b.on { background: var(--c-soft); color: var(--c); }
+.pv-info .am-badges { margin-top: 5px; }
+.dt-rows .am-row.yes .ic { color: var(--c); }
+.dt-rows .am-row.no .ic, .dt-rows .am-row.unknown .ic { color: #c2c6cc; }
+.dt-rows .am-row.no b, .dt-rows .am-row.unknown b { color: var(--muted); font-weight: 500; }
+.mk-pop .am-badges { margin-top: 3px; gap: 3px; }
+.mk-pop .am-b { height: 18px; padding: 0 4px; border-radius: 5px; }
+.mk-pop .am-b .ic { width: 12px; height: 12px; }
+
+/* ---------- 상단: 모드·인원 펼침 버튼 + 룸·주차·콜키지 ---------- */
+.quick { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 1px 2px 4px; margin: 0 -2px; }
+.quick::-webkit-scrollbar { display: none; }
+.q-sep { flex: none; width: 1px; height: 18px; background: rgba(31, 35, 40, 0.15); }
+.picker { flex: none; display: flex; gap: 4px; border-radius: 99px; }
+.picker button {
+  flex: none; display: inline-flex; align-items: center; gap: 3px; height: 34px; padding: 0 12px; border: 0; border-radius: 99px; white-space: nowrap;
+  background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: var(--shadow-sm);
+  font-size: 14px; font-weight: 700; color: var(--sub);
+}
+.picker .pk-cur { background: var(--ink); color: #fff; padding-right: 9px; }
+.picker .pk-cur .ic { opacity: 0.8; }
+.picker.open { background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: var(--shadow-sm); padding: 3px; animation: pk-open 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); transform-origin: left center; }
+.picker.open button { box-shadow: none; background: none; height: 30px; padding: 0 10px; backdrop-filter: none; }
+.picker.open button small { font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 2px; }
+.picker.open button[aria-checked="true"] { background: var(--ink); color: #fff; }
+.picker.open button[aria-checked="true"] small { color: rgba(255, 255, 255, 0.7); }
+@keyframes pk-open { from { opacity: 0.4; transform: scaleX(0.6); } }
+.quick .pref-row { flex: none; overflow: visible; padding: 0; margin: 0; }
+.quick .pref { height: 34px; }
+@media (min-width: 900px) {
+  .picker button, .picker.open { background: var(--bg); box-shadow: none; backdrop-filter: none; }
+  .picker .pk-cur { background: var(--ink); }
+}
+
+/* ---------- 작은 핀 (상위 10곳 외): 점 대신 미니 물방울 ---------- */
+.mk.mini { width: 24px; height: 24px; transform: translate(-50%, calc(-100% - 5px)); }
+.mk.mini .mk-pin { width: 24px; height: 24px; border-radius: 50% 50% 50% 4px; border-width: 2px; color: var(--sub); box-shadow: 0 2px 6px rgba(31, 35, 40, 0.3); }
+.mk.mini .mk-pin.g { border-color: var(--c); color: var(--c); }
+
+/* 묶음 수 배지 (+n): 누르면 묶음 확대 */
+.mk-more {
+  position: absolute; right: 24px; top: -10px; min-width: 22px; height: 20px; padding: 0 6px; border-radius: 99px;
+  background: var(--ink); color: #fff; font-size: 11px; font-weight: 800; display: grid; place-items: center;
+  border: 2px solid #fff; box-shadow: var(--shadow-sm); cursor: zoom-in;
+}
+.mk.mini .mk-more { right: 14px; top: -11px; min-width: 20px; height: 18px; font-size: 10px; padding: 0 5px; }
+.mk.is-active .mk-more { display: none; }
+
+/* 펼친 선택지는 줄 전체를 차지 (다른 버튼은 잠시 숨김), 같은 폭으로 나눠 잘리지 않게 */
+.quick.has-open > :not(.open) { display: none; }
+.quick.has-open { overflow: visible; }
+.picker.open { flex: 1; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; min-width: 0; }
+.picker.open button { height: 40px; padding: 0 2px; flex-direction: column; justify-content: center; gap: 0; font-size: 13px; line-height: 1.15; min-width: 0; }
+.picker.open button small { margin-left: 0; font-size: 10px; }
+#modePicker.open button { height: 36px; }
+
+/* ---------- 순위 등급 배지 (상위 1·3·5·10·30%) ---------- */
+.tier { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 6px; font-size: 11px; font-weight: 800; white-space: nowrap; vertical-align: 1px; }
+.tier.t1 { background: var(--c); color: #fff; }
+.tier.t3 { background: #e8590c; color: #fff; }
+.tier.t5 { background: #ffd8a8; color: var(--c-dark); }
+.tier.t10 { background: var(--c-soft); color: var(--c); }
+.tier.t30 { background: var(--bg); color: var(--sub); }
+.dt-sub .tier { height: 24px; font-size: 12px; padding: 0 9px; }
+.mk-rk.t1 { background: var(--c); color: #fff; }
+.mk-rk.t3 { background: #e8590c; color: #fff; }
+.mk-rk.t30 { color: var(--sub); }
+.mk-pop .tier { height: 17px; font-size: 10px; padding: 0 5px; }
+.pv-sub > span:not(.tier):first-of-type::before { content: ""; }
