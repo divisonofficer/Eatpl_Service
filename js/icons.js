@@ -1,0 +1,32 @@
+// 선 아이콘 (24×24, stroke=currentColor). Lucide 계열 형태를 단순화해 직접 정의.
+const P = {
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  sliders: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+  locate: '<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22"/>',
+  close: '<path d="M6 6l12 12M18 6 6 18"/>',
+  back: '<path d="m15 18-6-6 6-6"/>',
+  chevron: '<path d="m9 18 6-6-6-6"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  share: '<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/>',
+  route: '<path d="M3 11 21 3l-8 18-2-8-8-2Z"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  pin: '<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/>',
+  trend: '<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  fire: '<path d="M12 22c4 0 7-2.7 7-7 0-3-1.6-5.4-4-7.5.2 2-.6 3.4-1.8 4C13 8 11.5 5 9 2c0 4-4 6.2-4 11 0 5 3 9 7 9Z"/>',
+  minus: '<path d="M5 12h14"/>',
+  external: '<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  // 업종
+  utensils: '<path d="M4 2v7a3 3 0 0 0 3 3h0a3 3 0 0 0 3-3V2M7 2v20"/><path d="M20 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2h3Zm0 0v7"/>',
+  meat: '<path d="M12 22c4 0 7-2.7 7-7 0-3-1.6-5.4-4-7.5.2 2-.6 3.4-1.8 4C13 8 11.5 5 9 2c0 4-4 6.2-4 11 0 5 3 9 7 9Z"/>',
+  fish: '<path d="M2 12s3.5-6 10-6c4.5 0 8 3 10 6-2 3-5.5 6-10 6-6.5 0-10-6-10-6Z"/><path d="M2 12 0 9M2 12l-2 3"/><circle cx="16.5" cy="10.5" r="1"/>',
+  bowl: '<path d="M3 11h18a9 9 0 0 1-18 0Z"/><path d="M7 21h10M8 7c0-1 1-1.5 1-2.5M12 7c0-1 1-1.5 1-2.5M16 7c0-1 1-1.5 1-2.5"/>',
+  beer: '<path d="M6 8h10v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8Z"/><path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16M6 8a2.5 2.5 0 0 1 2.5-4c.8-1.2 3.2-1.3 4.3 0A2.5 2.5 0 0 1 16 8M9.5 12v6M12.5 12v6"/>',
+  cocktail: '<path d="M4 4h16l-8 9-8-9ZM12 13v8M8 21h8"/><path d="M15 4l2.5-2"/>',
+  drumstick: '<path d="M15.5 15.5a6 6 0 1 0-7-7c-.7 1.6-.5 3.3.4 4.7l-3.2 3.2a2 2 0 1 0-1.6 2.9 2 2 0 1 0 2.9-1.6l3.2-3.2c1.4.9 3.1 1.1 4.7.4Z"/>',
+  noodle: '<path d="M3 12h18a9 9 0 0 1-18 0Z"/><path d="M7 21h10M9 12V3M13 12V3M17 4 9 8"/>',
+};
+
+export const svg = (name, size = 20, extra = "") =>
+  `<svg class="ic ic-${name}" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${P[name] || P.utensils}</svg>`;

@@ -1,143 +1,147 @@
-// 사용: npm start 후 node tools/e2e-mobile.mjs [url]  → 스크린샷 /tmp/hoesikpick-e2e/*.png
-// CDP로 모바일 에뮬레이션 + 상호작용 검증
+// 사용: npm run dev 후 npm run e2e [url]  → 스크린샷 /tmp/hoesikpick-e2e/*.png
+// 모바일(390×844, 터치) 시나리오: 목록 → 핀 → 미리보기 넘기기 → 잇플 모달 → 상세 → 후보 → 결정·공유 → 공유 링크
+//                                → 필터 → 현위치(GPS 에뮬) → 1차→2차 → 검색어 추천
 import { spawn } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
-mkdirSync("/tmp/hoesikpick-e2e", { recursive: true });
+const URL0 = process.argv[2] || "http://localhost:8000/";
+const OUT = "/tmp/hoesikpick-e2e";
+mkdirSync(OUT, { recursive: true });
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const port = 9333;
-const proc = spawn(CHROME, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${port}`, "--user-data-dir=/tmp/hoesikpick-e2e/prof", "about:blank"], { stdio: "ignore" });
+const proc = spawn(CHROME, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${port}`, `--user-data-dir=${OUT}/prof`, "about:blank"], { stdio: "ignore" });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let targets;
 for (let i = 0; i < 40; i++) { try { targets = await (await fetch(`http://127.0.0.1:${port}/json`)).json(); break; } catch { await sleep(250); } }
-const page = targets.find((t) => t.type === "page");
-const ws = new WebSocket(page.webSocketDebuggerUrl);
+const ws = new WebSocket(targets.find((t) => t.type === "page").webSocketDebuggerUrl);
 await new Promise((r) => (ws.onopen = r));
-let id = 0; const pending = new Map(); const logs = [];
-ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id && pending.has(d.id)) { pending.get(d.id)(d); pending.delete(d.id); } if (d.method === "Runtime.consoleAPICalled") logs.push(d.params.args.map((a) => a.value ?? a.description).join(" ")); if (d.method === "Runtime.exceptionThrown") logs.push("EXC " + JSON.stringify(d.params.exceptionDetails.exception?.description || d.params.exceptionDetails.text)); };
+let id = 0; const pending = new Map(); const errors = [];
+ws.onmessage = (m) => {
+  const d = JSON.parse(m.data);
+  if (d.id && pending.has(d.id)) { pending.get(d.id)(d); pending.delete(d.id); }
+  if (d.method === "Runtime.exceptionThrown") errors.push(d.params.exceptionDetails.exception?.description || d.params.exceptionDetails.text);
+};
 const send = (method, params = {}) => new Promise((r) => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
 const ev = async (expr) => (await send("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true })).result?.result?.value;
-const shot = async (name) => { const r = await send("Page.captureScreenshot", { format: "png" }); writeFileSync(`/tmp/hoesikpick-e2e/${name}.png`, Buffer.from(r.result.data, "base64")); };
-const tap = async (x, y) => { for (const type of ["touchStart", "touchEnd"]) await send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y }] }); };
-const mouseDrag = async (x, y0, y1, steps = 8, dt = 16) => {
+const shot = async (name) => writeFileSync(`${OUT}/${name}.png`, Buffer.from((await send("Page.captureScreenshot", { format: "png" })).result.data, "base64"));
+const until = async (expr, ms = 12000) => { for (let t = 0; t < ms; t += 250) { if (await ev(expr)) return true; await sleep(250); } return false; };
+const tap = async (x, y) => { await send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] }); await send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); };
+const drag = async (x, y0, y1) => {
   await send("Input.dispatchMouseEvent", { type: "mousePressed", x, y: y0, button: "left", clickCount: 1 });
-  for (let i = 1; i <= steps; i++) { await send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y: y0 + ((y1 - y0) * i) / steps, button: "left", buttons: 1 }); await sleep(dt); }
+  for (let i = 1; i <= 10; i++) { await send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y: y0 + ((y1 - y0) * i) / 10, button: "left", buttons: 1 }); await sleep(30); }
   await send("Input.dispatchMouseEvent", { type: "mouseReleased", x, y: y1, button: "left", clickCount: 1 });
 };
+const load = async (url) => { await send("Page.navigate", { url }); await until(`document.querySelectorAll('.row').length > 0`, 20000); await sleep(1000); };
+const R = {};
+const check = (name, ok, info) => (R[name] = { ok: !!ok, ...(info !== undefined ? { info } : {}) });
 
 await send("Runtime.enable"); await send("Page.enable");
 await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
 await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
-await send("Page.navigate", { url: process.argv[2] || "http://localhost:8000/" });
-for (let i = 0; i < 60; i++) { await sleep(300); if (await ev(`document.querySelectorAll('.card').length > 0`)) break; }
-await sleep(1200);
-const info = () => ev(`({snap: document.getElementById('sheet').dataset.snap, top: Math.round(document.getElementById('sheet').getBoundingClientRect().top), searchBottom: Math.round(document.getElementById('top').getBoundingClientRect().bottom), count: document.getElementById('resultCount').textContent, open: document.querySelector('.card.open .name')?.textContent || null, cand: document.getElementById('candCount').textContent, listScroll: document.getElementById('results').scrollTop, bodyScroll: document.scrollingElement.scrollTop})`);
-const R = {};
-R.initial = await info(); await shot("01-initial");
-
-// 1) 시트 헤더 위로 드래그 → full
-const t = R.initial.top;
-await mouseDrag(195, t + 30, 120, 10, 30); await sleep(500);
-R.dragUp = await info(); await shot("02-full");
-
-// 2) 목록 스크롤이 시트 안에서만
-await ev(`document.getElementById('results').scrollBy(0, 400)`); await sleep(200);
-R.listScrolled = await info();
-
-// 3) 헤더 아래로 드래그 → 아래 스냅
-const t2 = R.listScrolled.top;
-await mouseDrag(195, t2 + 30, 820, 10, 30); await sleep(500);
-R.dragDown = await info(); await shot("03-peek");
-
-// 4) 지도 핀 탭 → half + 카드 열림
-const pin = await ev(`(() => { const el = [...document.querySelectorAll('.pin')].find(p => { const r = p.getBoundingClientRect(); return r.top > 180 && r.bottom < ${R.dragDown.top} - 10; }); if (!el) return null; const r = el.getBoundingClientRect(); return {x: r.left + r.width/2, y: r.top + r.height/2, text: el.textContent}; })()`);
-R.pin = pin;
-if (pin) { await tap(pin.x, pin.y); await sleep(1200); }
-R.afterPinTap = await info();
-R.activePinVisible = await ev(`(() => { const p = document.querySelector('.pin-active'); if (!p) return null; const r = p.getBoundingClientRect(); return {y: Math.round(r.top), aboveSheet: r.bottom < document.getElementById('sheet').getBoundingClientRect().top, belowSearch: r.top > document.getElementById('top').getBoundingClientRect().bottom}; })()`);
-await sleep(1500);
-R.kakaoHref = await ev(`document.querySelector('.card.open [data-kakao]')?.href`);
-await shot("04-pin");
-
-// 5) 후보 담기 2곳 → 안내문
-await ev(`document.querySelectorAll('.add')[0].click()`); await ev(`document.querySelectorAll('.add')[1].click()`); await sleep(200);
-await ev(`document.getElementById('candBtn').click()`); await sleep(300);
-R.dialog = await ev(`({open: document.getElementById('msgDialog').open, msg: document.getElementById('message').value.slice(0, 160)})`);
-await shot("05-dialog");
-
-// 6) 공유 링크 → 새로 열기 → 공유 모드
-R.shareLink = await ev(`(document.getElementById('message').value.match(/https?:\\/\\/\\S+share=\\S+/) || [])[0] || null`);
-await ev(`document.getElementById('msgDialog').close()`);
-// 7) 잇플 상세 모달 (iframe = merUrl 원본)
-await ev(`document.querySelector('.card.open [data-eatpl].cta, [data-eatpl]').click()`); await sleep(300);
-const wantUrl = await ev(`document.getElementById('epFrame').getAttribute('src')`);
-for (let i = 0; i < 30 && !(await ev(`document.getElementById('epLoading').hidden`)); i++) await sleep(300);
-R.eatplModal = await ev(`({ open: document.getElementById('eatplDialog').open, src: document.getElementById('epFrame').src, newTab: document.getElementById('epOpen').href, loaded: document.getElementById('epLoading').hidden })`);
-R.eatplModal.srcIsMerUrl = /^https:\/\/web\.paybooc\.ai\/mer\/web\/profile\/[A-Za-z0-9_-]+$/.test(wantUrl) && R.eatplModal.src === wantUrl && R.eatplModal.newTab === wantUrl;
-await sleep(1500); await shot("06-eatpl-modal");
-await ev(`document.getElementById('epClose').click()`); await sleep(200);
-R.afterClose = await ev(`({ open: document.getElementById('eatplDialog').open, src: document.getElementById('epFrame').src })`);
-if (R.shareLink) {
-  await send("Page.navigate", { url: R.shareLink });
-  for (let i = 0; i < 30; i++) { await sleep(300); if (await ev(`document.querySelectorAll('.card').length > 0`)) break; }
-  await sleep(800);
-  R.sharedView = await ev(`({ title: document.getElementById('resultCount').textContent, badge: document.getElementById('statusBadge').textContent, cards: [...document.querySelectorAll('.card .name')].map(n => n.textContent), urls: [...document.querySelectorAll('.sublinks a[target]')].map(a => a.href).filter(h => h.includes('paybooc')) })`);
-  await shot("07-shared");
-}
-
-// 8) 현위치 (GPS 에뮬레이션: 을지로3가역 부근)
-await send("Browser.grantPermissions", { permissions: ["geolocation"], origin: new URL(process.argv[2] || "http://localhost:8000/").origin });
+await send("Browser.grantPermissions", { permissions: ["geolocation"], origin: new URL(URL0).origin });
 await send("Emulation.setGeolocationOverride", { latitude: 37.5663, longitude: 126.9918, accuracy: 30 });
-await send("Page.navigate", { url: process.argv[2] || "http://localhost:8000/" });
-for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.querySelectorAll('.card').length > 0`)) break; }
-await sleep(800);
+
+// 1) 목록 + 시트 드래그
+await load(URL0); await sleep(2500); await shot("01-list");
+const top0 = await ev(`Math.round(document.getElementById('sheet').getBoundingClientRect().top)`);
+await drag(195, top0 + 25, 150); await sleep(500);
+const topFull = await ev(`Math.round(document.getElementById('sheet').getBoundingClientRect().top)`);
+await drag(195, topFull + 25, 820); await sleep(500);
+const topPeek = await ev(`Math.round(document.getElementById('sheet').getBoundingClientRect().top)`);
+check("sheetSnap", topFull < top0 && topPeek > top0, { half: top0, full: topFull, peek: topPeek });
+
+// 2) 핀 탭 → 미리보기 카드 + 선택 핀 미니 카드
+const pin = await ev(`(() => { const e = [...document.querySelectorAll('.mk-pin')].find(p => { const r = p.getBoundingClientRect(); return r.top > 150 && r.bottom < innerHeight - 160; }); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+if (pin) await tap(pin.x, pin.y);
+await until(`!document.getElementById('preview').hidden`); await sleep(900); await shot("02-preview");
+const pv = await ev(`({ cards: document.querySelectorAll('.pv-card').length, pop: !!document.querySelector('.mk.is-active .mk-pop'), sheetHidden: document.body.classList.contains('previewing') })`);
+check("pinToPreview", pin && pv.cards > 0 && pv.pop && pv.sheetHidden, pv);
+
+// 3) 카드 넘기기 → 선택 매장 변경
+const before = await ev(`document.querySelector('.mk.is-active .mk-pop b')?.textContent`);
+await ev(`(() => { const t = document.getElementById('pvTrack'); const cards = [...t.children]; const cur = cards.findIndex(c => c.querySelector('h3')?.textContent === document.querySelector('.mk.is-active .mk-pop b')?.textContent); const c = cards[(cur + 1) % cards.length]; t.scrollTo({ left: c.offsetLeft - (t.clientWidth - c.offsetWidth) / 2 }); })()`);
+await sleep(900);
+const after = await ev(`document.querySelector('.mk.is-active .mk-pop b')?.textContent`);
+check("swipeSync", before && after && before !== after, { before, after });
+
+// 4) 잇플 모달 = merUrl 원본
+await ev(`document.querySelector('.pv-card .btn-primary[data-eatpl]').click()`);
+await until(`document.getElementById('epLoading').hidden`, 15000);
+const ep = await ev(`({ open: document.getElementById('eatplDialog').open, src: document.getElementById('epFrame').getAttribute('src'), tab: document.getElementById('epOpen').href })`);
+check("eatplMerUrl", ep.open && /^https:\/\/web\.paybooc\.ai\/mer\/web\/profile\/[A-Za-z0-9_-]+$/.test(ep.src) && ep.src === ep.tab, ep.src);
+await shot("03-eatpl");
+await ev(`document.getElementById('epClose').click()`); await sleep(200);
+check("eatplClose", (await ev(`document.getElementById('epFrame').src`)) === "about:blank");
+
+// 5) 상세 → 후보 담기
+await ev(`document.querySelector('.pv-card [data-detail]').click()`); await sleep(1500); await shot("04-detail");
+const dt = await ev(`({ open: document.getElementById('detail').open, map: !!document.querySelector('#dtMap .leaflet-tile-pane img') })`);
+check("detail", dt.open && dt.map, dt);
+await ev(`document.querySelector('#detail .dt-bar [data-add]').click()`); await sleep(200);
+await ev(`document.getElementById('detail').close()`); await sleep(200);
+check("candidateAdded", (await ev(`document.getElementById('candCount').textContent`)) === "1");
+
+// 6) 결정·공유 (1차 → 근처 2차 추천)
+await ev(`document.getElementById('preview').hidden || document.getElementById('map').click()`);
+await ev(`document.getElementById('candBtn').click()`);
+await until(`document.querySelectorAll('.nb-card:not(.skel)').length > 0`, 15000); await sleep(600);
+await ev(`document.querySelector('.nb-card [data-add-second]')?.click()`); await sleep(300); await shot("05-decide");
+const dc = await ev(`({ items: document.querySelectorAll('.dc-item').length, msg: document.getElementById('message').value })`);
+const link = (dc.msg.match(/https?:\/\/\S+share=\S+/) || [])[0];
+check("decide", dc.items === 2 && /\[1차\][\s\S]*\[2차\]/.test(dc.msg) && link, { items: dc.items });
+await ev(`document.getElementById('decide').close()`);
+
+// 7) 공유 링크로 진입
+await send("Page.navigate", { url: link }); await until(`document.querySelectorAll('.row').length > 0`); await sleep(800);
+const sh = await ev(`({ title: document.getElementById('resultCount').textContent, rows: document.querySelectorAll('.row').length })`);
+check("sharedLink", sh.rows === 2 && sh.title.includes("공유"), sh);
+
+// 8) 필터: 치킨만 → 적용
+await load(URL0);
+await ev(`document.getElementById('filterBtn').click()`); await sleep(300);
+// 타일을 누를 때마다 다시 그려지므로 매번 새로 찾는다
+for (let k = 0; k < 20 && (await ev(`!!document.querySelector('.cat-tile[aria-pressed=true]')`)); k++) await ev(`document.querySelector('.cat-tile[aria-pressed=true]').click()`);
+await ev(`[...document.querySelectorAll('.cat-tile')].find(b => b.textContent.trim() === '치킨').click()`);
+await shot("06-filter");
+await ev(`document.getElementById('filterApply').click()`);
+await until(`!document.getElementById('resultCount').textContent.includes('검색 중')`); await sleep(800);
+const fl = await ev(`({ count: document.getElementById('filterCount').textContent, cats: [...new Set([...document.querySelectorAll('.row')].map(r => r.querySelector('.meta').textContent.split('·').map(x => x.trim())[1]))] })`);
+check("filter", fl.count === "1" && fl.cats.length === 1 && fl.cats[0] === "치킨", fl);
+
+// 9) 현위치
+await load(URL0);
 await ev(`document.getElementById('locateBtn').click()`);
-for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.getElementById('resultCount').textContent.includes('을지로3가')`)) break; }
-await sleep(1500);
-R.locate = await ev(`({
-  title: document.getElementById('resultCount').textContent,
-  loc: document.getElementById('loc').value,
-  btnOn: document.getElementById('locateBtn').classList.contains('on'),
-  meDot: !!document.querySelector('.me-dot'),
-  dists: [...document.querySelectorAll('.card .dist')].slice(0, 6).map(d => d.textContent),
-  photoPins: document.querySelectorAll('.pin-photo').length,
-})`);
-await shot("08-locate");
+await until(`document.getElementById('resultCount').textContent.includes('을지로3가')`, 15000); await sleep(800);
+const lc = await ev(`({ title: document.getElementById('resultCount').textContent, me: !!document.querySelector('.me-dot'), dist: document.querySelector('.row .dist')?.textContent })`);
+check("locate", lc.me && lc.dist, lc); await shot("07-locate");
 
-// 9) 1차 → 2차
-await send("Page.navigate", { url: process.argv[2] || "http://localhost:8000/" });
-for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.querySelectorAll('.card').length > 0`)) break; }
-await sleep(600);
-R.tabs = await ev(`[...document.querySelectorAll('#modeTabs button')].map(b => b.textContent)`);
-await ev(`document.querySelector('.card').click()`); await sleep(500);
-await ev(`document.querySelector('.card.open [data-next]').click()`);
-for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.getElementById('resultCount').textContent.includes('근처')`)) break; }
-await sleep(1200);
-R.secondStop = await ev(`({
-  title: document.getElementById('resultCount').textContent,
-  tab: document.querySelector('#modeTabs [aria-selected=true]').textContent,
-  input: document.getElementById('loc').value,
-  cand: document.getElementById('candCount').textContent,
-  walk: [...document.querySelectorAll('.card .dist')].slice(0, 4).map(d => d.textContent),
-  firstMarker: document.querySelector('.first-stop')?.textContent,
-})`);
-await ev(`[...document.querySelectorAll('.add')].find(b => !b.classList.contains('on'))?.click()`); await sleep(200);
-await ev(`document.getElementById('candBtn').click()`); await sleep(300);
-R.stagedMsg = await ev(`document.getElementById('message').value.split('\\n위치·상세')[0]`);
-await ev(`document.getElementById('msgDialog').close()`);
-await shot("09-second");
+// 10) 1차 → 2차
+await load(URL0);
+await ev(`document.querySelector('.row').click()`); await sleep(700);
+await ev(`document.querySelector('.pv-card [data-next]').click()`);
+await until(`document.getElementById('resultCount').textContent.includes('근처')`, 15000); await sleep(800);
+const ss = await ev(`({ tab: document.querySelector('#modeTabs [aria-selected=true]').textContent, title: document.getElementById('resultCount').textContent, walk: document.querySelector('.row .dist')?.textContent, origin: !!document.querySelector('.origin-mk') })`);
+check("secondStop", ss.tab === "2차" && /도보/.test(ss.walk || "") && ss.origin, ss); await shot("08-second");
 
-// 10) 검색어 추천: '천호역' 입력 → 🚇 추천 → Enter
+// 11) 검색어 추천
 await ev(`(() => { const i = document.getElementById('loc'); i.focus(); i.value = ''; i.dispatchEvent(new Event('input')); })()`);
 await send("Input.insertText", { text: "천호역" });
-for (let i = 0; i < 20; i++) { await sleep(250); if (await ev(`[...document.querySelectorAll('#suggest li')].some(l => l.textContent.includes('🚇'))`)) break; }
-R.suggest = await ev(`[...document.querySelectorAll('#suggest li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim())`);
-await shot("10-suggest");
-await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
-for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.getElementById('resultCount').textContent.includes('천호')`)) break; }
-await sleep(1500);
-R.placeSearch = await ev(`({ title: document.getElementById('resultCount').textContent, input: document.getElementById('loc').value, dists: [...document.querySelectorAll('.card .dist')].slice(0, 4).map(d => d.textContent) })`);
-await shot("11-place");
+await until(`[...document.querySelectorAll('#suggest li')].some(l => l.textContent.includes('지하철역'))`);
+await shot("09-suggest");
+await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" });
+await until(`document.getElementById('resultCount').textContent.includes('천호')`, 15000);
+check("suggest", await ev(`document.getElementById('resultCount').textContent.includes('천호')`));
 
+// 12) 추천이 뜨기 전에 바로 Enter → 첫 역으로 해석
+await load(URL0);
+await ev(`(() => { const i = document.getElementById('loc'); i.focus(); i.value = ''; i.dispatchEvent(new Event('input')); })()`);
+await send("Input.insertText", { text: "강남역" });
+await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" });
+await until(`document.getElementById('resultCount').textContent.includes('강남역')`, 15000);
+check("enterBeforeSuggest", await ev(`document.getElementById('resultCount').textContent.includes('강남역')`), await ev(`document.getElementById('resultCount').textContent`));
+
+check("noErrors", errors.length === 0, errors.slice(0, 3));
+const failed = Object.entries(R).filter(([, v]) => !v.ok);
 console.log(JSON.stringify(R, null, 2));
-console.log("console:", logs.slice(0, 10));
+console.log(failed.length ? `FAIL ${failed.map(([k]) => k).join(", ")}` : `ALL PASS (${Object.keys(R).length})`);
 ws.close(); proc.kill();
+process.exitCode = failed.length ? 1 : 0;

@@ -144,7 +144,7 @@ const photoCache = new Map();
 let photosDisabled = false;
 let active = 0;
 const waiters = [];
-const slot = () => (active < 3 ? (active++, Promise.resolve()) : new Promise((r) => waiters.push(r)));
+const slot = () => (active < 6 ? (active++, Promise.resolve()) : new Promise((r) => waiters.push(r)));
 const release = () => (waiters.length ? waiters.shift()() : active--);
 
 export function storePhotos(s) {

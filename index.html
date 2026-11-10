@@ -11,67 +11,81 @@
 <body>
   <div id="map" aria-label="지도"></div>
 
-  <!-- 상단 플로팅 검색 -->
+  <!-- 상단: 검색 + 필터 + 모드 탭 -->
   <header id="top">
     <form class="search" id="filters" role="search">
-      <span class="brand" aria-hidden="true">회식픽</span>
-      <input id="loc" placeholder="동네·역·회사 (예: 천호역)" autocomplete="off" enterkeyhint="search" />
-      <label class="headcount">인원<input id="headcount" type="number" min="1" max="99" value="12" inputmode="numeric" /></label>
-      <button type="submit" class="go" aria-label="검색">검색</button>
+      <span class="search-ic" id="searchIc"></span>
+      <input id="loc" placeholder="동네·역·회사 검색" autocomplete="off" enterkeyhint="search" />
+      <button type="button" id="filterBtn" class="search-btn" aria-label="필터">
+        <span id="filterIc"></span><b id="filterCount" class="count-dot" hidden></b>
+      </button>
     </form>
     <ul id="suggest" class="suggest" role="listbox" hidden></ul>
-    <nav class="scroller tabs" id="modeTabs" role="tablist"></nav>
-    <div class="chips-row" id="chipsRow">
-      <div class="scroller chips" id="chips"></div>
-      <button type="button" id="chipsMore" class="chips-more" aria-expanded="false" aria-controls="chips">더보기</button>
-    </div>
+    <nav class="tabs" id="modeTabs" role="tablist"></nav>
   </header>
 
-  <button type="button" id="locateBtn" class="locate" aria-label="내 위치로 검색" title="내 위치 주변 검색">
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="currentColor"/><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-  </button>
+  <!-- 지도 플로팅 버튼 -->
+  <div class="fabs" id="fabs">
+    <button type="button" id="locateBtn" class="fab" aria-label="내 위치 주변 검색"></button>
+  </div>
 
-  <!-- 바텀시트 (데스크톱에서는 좌측 패널) -->
+  <!-- 목록 바텀시트 (데스크톱: 좌측 패널) -->
   <section id="sheet" data-snap="half" aria-label="검색 결과">
     <div class="sheet-head" id="sheetHead">
       <div class="handle" aria-hidden="true"></div>
       <div class="head-row">
-        <div>
+        <div class="head-text">
           <div class="head-title"><span id="resultCount">-</span> <span id="statusBadge" class="badge" hidden></span></div>
           <div class="head-sub">최근 1개월 결제 기준</div>
         </div>
-        <button id="candBtn" class="cand-btn" disabled>후보 <b id="candCount">0</b>/3 · 안내문</button>
+        <button id="candBtn" class="cand-btn" disabled>후보 <b id="candCount">0</b></button>
       </div>
     </div>
     <ol id="results"></ol>
   </section>
 
-  <!-- 안내문 다이얼로그 -->
-  <dialog id="msgDialog">
-    <form method="dialog" class="dlg">
-      <div class="dlg-head">
-        <strong>단톡방 안내문</strong>
-        <button class="x" value="close" aria-label="닫기">✕</button>
+  <!-- 핀 선택 시 미리보기 카드 (좌우로 넘기기) -->
+  <section id="preview" class="preview" hidden aria-label="매장 미리보기">
+    <div id="pvTrack" class="pv-track"></div>
+  </section>
+
+  <!-- 필터 시트 -->
+  <dialog id="filterDialog" class="bottom-dialog">
+    <div class="bd-head">
+      <strong>필터</strong>
+      <button type="button" class="icon-btn" data-close aria-label="닫기"></button>
+    </div>
+    <div class="bd-section">
+      <div class="bd-label">인원</div>
+      <div class="stepper">
+        <button type="button" id="hcMinus" class="icon-btn round" aria-label="한 명 줄이기"></button>
+        <output id="hcValue">12</output><span>명</span>
+        <button type="button" id="hcPlus" class="icon-btn round" aria-label="한 명 늘리기"></button>
       </div>
-      <ul id="candList"></ul>
-      <div class="tone" role="radiogroup">
-        <label><input type="radio" name="tone" value="formal" checked /> 격식</label>
-        <label><input type="radio" name="tone" value="casual" /> 캐주얼</label>
-      </div>
-      <textarea id="message" readonly rows="9"></textarea>
-      <div class="dlg-actions">
-        <button type="button" id="shareBtn" class="primary">공유하기</button>
-        <button type="button" id="copyBtn" class="secondary">문구 복사</button>
-      </div>
-    </form>
+      <div class="bd-hint">10명 이상이면 회식 적합 매장만</div>
+    </div>
+    <div class="bd-section">
+      <div class="bd-label">업종</div>
+      <div id="catGrid" class="cat-grid"></div>
+    </div>
+    <div class="bd-actions">
+      <button type="button" id="filterReset" class="btn btn-ghost">초기화</button>
+      <button type="button" id="filterApply" class="btn btn-primary">적용</button>
+    </div>
   </dialog>
 
-  <!-- 잇플 상세 (merUrl 원본 그대로 iframe. 새 창 링크도 항상 제공) -->
+  <!-- 매장 상세 -->
+  <dialog id="detail" class="page" aria-label="매장 상세"></dialog>
+
+  <!-- 결정·공유 -->
+  <dialog id="decide" class="page" aria-label="후보 결정"></dialog>
+
+  <!-- 잇플 상세 (merUrl 원본 iframe + 새 창) -->
   <dialog id="eatplDialog" class="eatpl">
     <div class="ep-head">
       <div class="ep-title"><span class="ep-logo">eat.pl 잇플</span><strong id="epTitle"></strong></div>
-      <a id="epOpen" class="ep-open" target="_blank" rel="noopener">새 창 ↗</a>
-      <button type="button" id="epClose" class="x" aria-label="닫기">✕</button>
+      <a id="epOpen" class="ep-open" target="_blank" rel="noopener">새 창</a>
+      <button type="button" id="epClose" class="icon-btn" aria-label="닫기"></button>
     </div>
     <div class="ep-body">
       <div id="epLoading" class="ep-loading">불러오는 중…</div>
@@ -80,10 +94,9 @@
     </div>
   </dialog>
 
-  <!-- 카카오톡 인앱 브라우저 안내 -->
   <div id="inapp" class="inapp" hidden>
     <a id="inappOpen" href="#">기본 브라우저로 열기</a>
-    <button type="button" class="x" aria-label="닫기" onclick="this.parentElement.hidden=true">✕</button>
+    <button type="button" class="icon-btn" aria-label="닫기" onclick="this.parentElement.hidden=true"></button>
   </div>
 
   <div id="toast" hidden></div>

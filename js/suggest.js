@@ -51,6 +51,7 @@ export function attachSuggest({ input, box, onPick }) {
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
   const close = () => {
     box.hidden = true;
+    box.innerHTML = "";
     active = -1;
     input.setAttribute("aria-expanded", "false");
   };
@@ -132,4 +133,15 @@ export function attachSuggest({ input, box, onPick }) {
   });
   input.addEventListener("blur", () => setTimeout(close, 120));
   return { close };
+}
+
+// 검색 버튼/Enter 시 추천을 고르지 않았다면: 구 이름이면 그대로, 아니면 첫 추천(역·장소)으로 해석
+export async function resolveQuery(q) {
+  const nq = norm(q);
+  if (!nq) return null;
+  const gu = SEOUL_GU.find((g) => norm(g) === nq || norm(g.replace("서울 ", "")) === nq);
+  if (gu) return { kind: "gu", label: gu };
+  if (/[시군구동읍면]$/.test(q.trim().split(/\s+/).at(-1))) return null; // 주소처럼 보이면 그대로 검색
+  const places = await kakaoPlaces(q.trim());
+  return places.find((p) => p.kind === "station") || places[0] || null;
 }
