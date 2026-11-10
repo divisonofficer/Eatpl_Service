@@ -501,3 +501,11 @@ body.previewing .area-btn { top: auto; bottom: calc(var(--pv-h) + 24px); }
 .rec-box li.neg { color: var(--muted); }
 .age-row { display: flex; gap: 6px; }
 #dayPicker.open button { padding: 0 1px; }
+
+/* 상단 2줄: 1줄 = 모드·인원·요일, 2줄 = 룸·주차·콜키지 */
+.quick2 { display: flex; gap: 6px; margin-top: -2px; padding: 0 2px; overflow: visible; }
+.quick2 .pref { height: 30px; font-size: 12px; padding: 0 11px; }
+@media (max-width: 360px) {
+  .picker .pk-cur { font-size: 13px; padding: 0 8px 0 10px; height: 32px; }
+  .quick { gap: 4px; }
+}
