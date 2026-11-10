@@ -196,3 +196,22 @@ export function storeAmenities(s) {
   amenCache.set(s.id, p);
   return p;
 }
+
+// ---------- 검색어 → 좌표 (결과가 없을 때 지도 이동용) ----------
+const geoCache = new Map();
+export function geocode(q) {
+  q = String(q || "").trim();
+  if (!q) return Promise.resolve(null);
+  if (!geoCache.has(q))
+    geoCache.set(
+      q,
+      fetch(`/api/kakao/keyword?${new URLSearchParams({ query: q, size: "1" })}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => {
+          const d = j?.documents?.[0];
+          return d ? { lat: Number(d.y), lng: Number(d.x), name: d.place_name } : null;
+        })
+        .catch(() => null)
+    );
+  return geoCache.get(q);
+}

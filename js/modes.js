@@ -14,7 +14,7 @@ export const MODES = {
     noun: "회식",
     keyword: "회식",
     categories: ["고기구이", "갈비전문점", "한정식", "중국음식", "일식회집", "곱창전골/구이", "족발/보쌈"],
-    filter: (s) => s.group,
+    filter: () => true, // 시간대 영업 여부·회식 적합은 추천 엔진(js/recommend.js)에서
     score: (s) => s.rank + kwBonus(s) - (s.busyTime === "저녁" ? 2 : 0),
   },
   after: {
@@ -22,7 +22,7 @@ export const MODES = {
     noun: "2차",
     keyword: "퇴근후한잔",
     categories: ["주점", "칵테일바", "치킨", "양꼬치", "곱창전골/구이"],
-    filter: (s) => closeAbs(s) >= 2100,
+    filter: () => true, // 시간대 영업 여부·회식 적합은 추천 엔진(js/recommend.js)에서
     score: (s) => s.rank + kwBonus(s),
   },
   lunch: {
@@ -30,7 +30,7 @@ export const MODES = {
     noun: "점심 회식",
     keyword: null,
     categories: ["일반한식", "찜/탕/찌개", "한정식", "중국음식", "일식회집"],
-    filter: (s) => s.open !== "" && Number(s.open) <= 1130,
+    filter: () => true, // 시간대 영업 여부·회식 적합은 추천 엔진(js/recommend.js)에서
     score: (s) => s.rank + (s.busyTime === "점심" ? 1000 : 0), // 점심에 붐비는 집은 뒤로
   },
   late: {
@@ -38,7 +38,7 @@ export const MODES = {
     noun: "야식",
     keyword: "심야",
     categories: ["치킨", "분식", "떡볶이전문점", "족발/보쌈", "양꼬치"],
-    filter: (s) => closeAbs(s) >= 2200 || s.kw,
+    filter: () => true, // 시간대 영업 여부·회식 적합은 추천 엔진(js/recommend.js)에서
     score: (s) => s.rank + kwBonus(s),
   },
 };

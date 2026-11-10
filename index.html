@@ -24,6 +24,7 @@
     <div class="quick" id="quick">
       <div class="picker" id="modePicker" role="radiogroup" aria-label="모드"></div>
       <div class="picker" id="sizePicker" role="radiogroup" aria-label="인원"></div>
+      <div class="picker" id="dayPicker" role="radiogroup" aria-label="요일"></div>
       <span class="q-sep" aria-hidden="true"></span>
       <div id="prefRow" class="pref-row" role="group" aria-label="룸·주차·콜키지"></div>
     </div>
@@ -43,7 +44,7 @@
       <div class="head-row">
         <div class="head-text">
           <div class="head-title"><span id="resultCount">-</span> <span id="statusBadge" class="badge" hidden></span></div>
-          <div class="head-sub">최근 1개월 결제 기준</div>
+          <div class="head-sub" id="headSub">최근 1개월 결제 기준</div>
         </div>
         <button id="candBtn" class="cand-btn" disabled>후보 <b id="candCount">0</b></button>
       </div>
@@ -61,6 +62,10 @@
     <div class="bd-head">
       <strong>필터</strong>
       <button type="button" class="icon-btn" data-close aria-label="닫기"></button>
+    </div>
+    <div class="bd-section">
+      <div class="bd-label">팀 연령대 <span class="bd-hint">선택 · 또래가 단골인 곳 추천</span></div>
+      <div id="ageRow" class="age-row"></div>
     </div>
     <div class="bd-section">
       <div class="bd-label">업종</div>

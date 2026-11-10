@@ -194,6 +194,27 @@ await ev(`document.querySelector('[data-pref=room]').click()`); await ev(`docume
 const n1 = await ev(`document.querySelectorAll('.row').length`);
 check("prefFilter", f.title.includes("룸·주차") && f.rows <= n0 && f.allOn && n1 === n0, { n0, ...f, n1 });
 
+// 16) 추천 이유 + 요일 선택 (휴무 제외)
+await load(URL0); await until(`!document.querySelector('.tile.skel')`, 15000); await sleep(500);
+const why = await ev(`[...document.querySelectorAll('.row .why')].slice(0, 3).map(w => w.textContent.trim())`);
+await ev(`document.querySelector('#dayPicker .pk-cur').click()`); await sleep(300);
+const dayOpts = await ev(`document.querySelectorAll('#dayPicker [data-k]').length`);
+await ev(`document.querySelector('#dayPicker [data-k="일"]').click()`);
+await until(`!document.getElementById('resultCount').textContent.includes('검색')`, 15000); await sleep(600);
+const sun = await ev(`({ cur: document.querySelector('#dayPicker .pk-cur').textContent.trim(), sub: document.getElementById('headSub').textContent })`);
+check("recommendWhy", why.length > 0 && why.every((w) => w.length > 0) && dayOpts === 8 && sun.cur === "일요일", { why, sun });
+
+// 17) 결과 0곳이어도 검색한 곳으로 지도 이동 (독도: 주변 반경에 매장 없음)
+await load(URL0);
+const c0 = await ev(`(() => { const c = window.__hp.map.getCenter(); return [c.lat, c.lng]; })()`);
+await ev(`(() => { const i = document.getElementById('loc'); i.focus(); i.value = ''; i.dispatchEvent(new Event('input')); })()`);
+await send("Input.insertText", { text: "독도" });
+await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" });
+await until(`document.getElementById('resultCount').textContent.startsWith('0곳')`, 20000); await sleep(1800);
+const c1 = await ev(`(() => { const c = window.__hp.map.getCenter(); return [c.lat, c.lng]; })()`);
+check("emptyMoves", (await ev(`document.getElementById('resultCount').textContent`)).startsWith("0곳") && c1[1] > 131 && c1[0] > 37, { title: await ev(`document.getElementById('resultCount').textContent`), from: c0, to: c1 });
+await shot("13-empty-move");
+
 check("noErrors", errors.length === 0, errors.slice(0, 3));
 const failed = Object.entries(R).filter(([, v]) => !v.ok);
 console.log(JSON.stringify(R, null, 2));

@@ -488,3 +488,16 @@ body.previewing .area-btn { top: auto; bottom: calc(var(--pv-h) + 24px); }
 .mk-rk.t30 { color: var(--sub); }
 .mk-pop .tier { height: 17px; font-size: 10px; padding: 0 5px; }
 .pv-sub > span:not(.tier):first-of-type::before { content: ""; }
+
+/* ---------- 추천 이유 ---------- */
+.why { display: flex; flex-wrap: wrap; gap: 3px 6px; margin-top: 5px; font-size: 12px; font-weight: 700; color: var(--c-dark); }
+.why span + span::before { content: "· "; color: var(--c-light); font-weight: 400; }
+.why .warn { color: var(--muted); font-weight: 600; }
+.rec-box { background: var(--c-soft); border-radius: 14px; padding: 12px 14px; }
+.rec-box b { font-size: 13px; color: var(--c-dark); }
+.rec-box ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.rec-box li { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink); }
+.rec-box li.pos .ic { color: var(--c); }
+.rec-box li.neg { color: var(--muted); }
+.age-row { display: flex; gap: 6px; }
+#dayPicker.open button { padding: 0 1px; }
