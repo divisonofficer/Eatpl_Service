@@ -6,6 +6,7 @@ import { createSheet } from "./sheet.js";
 import { shareLink, readShare, isKakaoInApp, kakaoExternalUrl } from "./share.js";
 import { attachSuggest, resolveQuery } from "./suggest.js";
 import { svg } from "./icons.js";
+import { roomLabel, corkLabel, parkLabel, fmtWon } from "./amenities-fmt.js";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -15,6 +16,7 @@ const state = {
   mode: "dinner",
   categories: new Set(MODES.dinner.categories),
   headcount: 12,
+  prefs: new Set(), // 우선 보기: room | park | cork
   stores: [],
   total: 0,
   candidates: [],
@@ -33,12 +35,11 @@ const inCand = (id) => state.candidates.some((c) => c.id === id);
 $("searchIc").innerHTML = svg("search", 20);
 $("filterIc").innerHTML = svg("sliders", 20);
 $("locateBtn").innerHTML = svg("locate", 22);
-$("hcMinus").innerHTML = svg("minus", 18);
-$("hcPlus").innerHTML = svg("plus", 18);
 document.querySelectorAll("[data-close], #epClose, #inapp .icon-btn").forEach((b) => (b.innerHTML = svg("close", 20)));
 
 // ---------- 지도 ----------
 const map = L.map("map", { zoomControl: false }).setView([37.57, 126.99], 14);
+map.attributionControl.setPrefix(false); // "Leaflet" 접두어 제거 (OSM·잇플 출처 표기는 유지)
 L.control.zoom({ position: "bottomright" }).addTo(map);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
@@ -52,8 +53,9 @@ const LABELED = 10; // 상위 N곳은 아이콘 핀, 나머지는 점
 const HOT = 3; // 상위 3곳은 주황 핀
 const kakaoRoute = (s) => `https://map.kakao.com/link/to/${encodeURIComponent(s.name)},${s.lat},${s.lng}`;
 
+const hi = (u) => (u ? String(u).replace("/130x130_85_c/", "/320x320_85_c/") : u);
 function thumbHtml(s, size = 22, label = true) {
-  const photo = s.photo?.pin?.thumb || s.photo?.images?.[0]?.thumb;
+  const photo = hi(s.photo?.pin?.thumb || s.photo?.images?.[0]?.thumb);
   if (photo) return `<img src="${esc(photo)}" alt="" referrerpolicy="no-referrer" />`;
   if (s.photo === undefined && s.photoLoading) return `<span class="tile skel"></span>`;
   return `<span class="tile${s.group ? " g" : ""}">${svg(catIcon(s.category), size)}${label ? `<small>${esc(catLabel(s.category))}</small>` : ""}</span>`;
@@ -62,7 +64,7 @@ function thumbHtml(s, size = 22, label = true) {
 function storeMarkerHtml(s, i) {
   const active = s.id === state.activeId;
   if (!active && i >= LABELED) return `<div class="mk-dot${s.group ? " g" : ""}"></div>`;
-  const photo = s.photo?.pin?.thumb;
+  const photo = hi(s.photo?.pin?.thumb);
   const inner = photo ? `<img src="${esc(photo)}" alt="" referrerpolicy="no-referrer" />` : svg(catIcon(s.category), 18);
   const pop = active
     ? `<div class="mk-pop" data-pop>
@@ -142,19 +144,26 @@ function fitPadding() {
   const c = cover();
   return { paddingTopLeft: [c.left + 28, c.top + 40], paddingBottomRight: [28, c.bottom + 28] };
 }
+// 프로그램이 움직인 이동(결과 맞춤·선택 이동)은 '여기서 검색' 버튼을 띄우지 않는다.
+// 횟수로 세면 실제로 안 움직였을 때 moveend 가 안 와서 어긋나므로 시간 창으로 판단.
+let autoUntil = 0;
+const auto = (fn) => {
+  autoUntil = performance.now() + 1200;
+  fn();
+};
 function focusStore(s) {
   const c = cover();
   const z = Math.max(map.getZoom(), 16);
   const visCx = (c.left + window.innerWidth) / 2;
   const visCy = (c.top + (window.innerHeight - c.bottom)) / 2 + 40; // 미니 카드 공간
   const off = L.point(window.innerWidth / 2 - visCx, window.innerHeight / 2 - visCy);
-  map.flyTo(map.unproject(map.project([s.lat, s.lng], z).add(off), z), z, { duration: 0.5 });
+  auto(() => map.flyTo(map.unproject(map.project([s.lat, s.lng], z).add(off), z), z, { duration: 0.5 }));
 }
 function fitAll() {
   if (!state.stores.length) return;
   const pts = state.stores.map((s) => [s.lat, s.lng]);
   if (state.origin) pts.push([state.origin.lat, state.origin.lng]);
-  map.fitBounds(L.latLngBounds(pts), { ...fitPadding(), maxZoom: 16 });
+  auto(() => map.fitBounds(L.latLngBounds(pts), { ...fitPadding(), maxZoom: 16 }));
 }
 
 // ---------- 바텀시트 ----------
@@ -162,7 +171,7 @@ const sheet = createSheet({
   sheet: $("sheet"),
   head: $("sheetHead"),
   top: $("top"),
-  onChange: () => map.invalidateSize({ pan: false }),
+  onChange: () => auto(() => map.invalidateSize({ pan: false })), // 시트 높이 변화는 사용자 이동이 아님
 });
 
 // ---------- 모드 탭 ----------
@@ -197,7 +206,10 @@ function renderCatGrid() {
     (c) => `<button type="button" class="cat-tile" data-cat="${esc(c)}" aria-pressed="${pending.cats.has(c)}">
       ${svg(catIcon(c), 22)}<span>${esc(catLabel(c))}</span></button>`
   ).join("");
-  $("hcValue").textContent = pending.hc;
+  $("sizeSeg").innerHTML = SIZES.map(
+    (z) => `<button type="button" data-size="${z.n}" aria-pressed="${sizeOf(pending.hc).n === z.n}"><b>${z.label}</b><span>${z.sub}</span></button>`
+  ).join("");
+
 }
 $("filterBtn").addEventListener("click", () => {
   pending = { cats: new Set(state.categories), hc: state.headcount };
@@ -210,8 +222,32 @@ $("catGrid").addEventListener("click", (e) => {
   pending.cats.has(c) ? pending.cats.delete(c) : pending.cats.add(c);
   renderCatGrid();
 });
-$("hcMinus").addEventListener("click", () => ((pending.hc = Math.max(1, pending.hc - 1)), renderCatGrid()));
-$("hcPlus").addEventListener("click", () => ((pending.hc = Math.min(99, pending.hc + 1)), renderCatGrid()));
+$("sizeSeg").addEventListener("click", (e) => {
+  const n = e.target.closest("[data-size]")?.dataset.size;
+  if (n) (pending.hc = Number(n)), renderCatGrid();
+});
+// 우선 보기 (메인 화면): 누르면 현재 목록만 다시 정렬 — 재검색·API 호출 없음
+function renderPrefs() {
+  $("prefRow").innerHTML = PREFS.map(
+    (p) => `<button type="button" class="pref" data-pref="${p.k}" aria-pressed="${state.prefs.has(p.k)}">${svg(p.icon, 15)}${p.label}</button>`
+  ).join("");
+}
+$("prefRow").addEventListener("click", (e) => {
+  const k = e.target.closest("[data-pref]")?.dataset.pref;
+  if (!k) return;
+  state.prefs.has(k) ? state.prefs.delete(k) : state.prefs.add(k);
+  renderPrefs();
+  resort();
+});
+function resort() {
+  const has = (s) => !!(s.photo?.pin || s.photo?.images?.length);
+  const pref = (s) => [...state.prefs].filter((k) => PREF_OK[k](s.photo?.amenities || {})).length;
+  state.stores = [...state.stores].sort((a, b) => pref(b) - pref(a) || has(b) - has(a) || a.order - b.order);
+  $("results").scrollTop = 0;
+  renderResults();
+  renderMarkers();
+  if (state.preview) openPreview();
+}
 $("filterReset").addEventListener("click", () => {
   pending = { cats: new Set(MODES[state.mode].categories), hc: 12 };
   renderCatGrid();
@@ -245,8 +281,11 @@ $("filters").addEventListener("submit", async (e) => {
 });
 
 let seq = 0;
+let searching = false;
 async function run() {
   const my = ++seq;
+  searching = true;
+  $("areaBtn").hidden = true;
   if (state.shared) {
     state.shared = false;
     history.replaceState(null, "", location.pathname);
@@ -254,15 +293,17 @@ async function run() {
   closePreview(false);
   const mode = MODES[state.mode];
   if (!$("loc").value.trim()) $("loc").value = CONFIG.defaultLocation;
-  const location = state.origin?.query || $("loc").value.trim();
+  const locations = state.origin?.queries || [state.origin?.query || $("loc").value.trim()];
   const categories = [...state.categories];
   $("resultCount").textContent = "검색 중…";
   try {
     if (!categories.length) throw new Error("업종을 선택하세요");
-    const raw = await search({ keyword: mode.keyword, location, categories });
+    const lists = await Promise.all(locations.map((location) => search({ keyword: mode.keyword, location, categories })));
+    const seen = new Set();
+    const raw = lists.flat().filter((s) => !seen.has(s.id) && seen.add(s.id));
     if (my !== seq) return;
     const all = applyMode(state.mode, raw, { headcount: state.headcount, groupThreshold: CONFIG.groupThreshold });
-    const near = state.origin ? nearby(all, state.origin) : all;
+    const near = state.origin?.kind === "area" ? inArea(all, state.origin) : state.origin ? nearby(all, state.origin) : all;
     state.total = near.length;
     state.stores = near.slice(0, CONFIG.maxPins);
     state.stores.forEach((s, i) => (s.order = i));
@@ -277,7 +318,9 @@ async function run() {
   state.activeId = null;
   $("results").scrollTop = 0;
   renderMarkers();
-  fitAll();
+  if (state.origin?.kind === "area") markSearched();
+  else fitAll();
+  setTimeout(() => (searching = false), 1300);
   if (sheet.snap === "peek") sheet.set("half");
   await photosFirst(my);
 }
@@ -294,7 +337,8 @@ async function photosFirst(my) {
   await Promise.race([all, new Promise((r) => setTimeout(r, PHOTO_WAIT))]);
   if (my !== seq) return;
   const has = (s) => !!(s.photo?.pin || s.photo?.images?.length);
-  const sorted = [...head.filter(has), ...head.filter((s) => !has(s))];
+  const pref = (s) => [...state.prefs].filter((k) => PREF_OK[k](s.photo?.amenities || {})).length;
+  const sorted = [...head].sort((a, b) => pref(b) - pref(a) || has(b) - has(a) || a.order - b.order);
   state.stores = [...sorted, ...state.stores.slice(PHOTO_N)];
   head.forEach((s) => s.photo === undefined || delete s.photoLoading);
   renderResults();
@@ -317,9 +361,51 @@ function rowHtml(s) {
   </li>`;
 }
 const tagsHtml = (s) => {
-  const t = `${s.group ? "<em>회식 적합</em>" : ""}${s.local ? "<span>동네 맛집</span>" : ""}${s.busyTime ? `<span>${esc(s.busyDay)} ${esc(s.busyTime)} 붐빔</span>` : ""}`;
-  return t ? `<div class="tags">${t}</div>` : "";
+  const a = s.photo?.amenities || {};
+  const am = [
+    a.room?.state === "yes" ? `<em class="am">${esc(roomLabel(a.room).replace(/^룸 · /, "룸 · "))}</em>` : "",
+    a.parking ? `<span class="am${a.parking.state === "no" || a.parking.state === "limited" ? " neg" : ""}">${esc(parkLabel(a.parking))}</span>` : "",
+    a.corkage && a.corkage.state !== "no" ? `<span class="am">${esc(corkLabel(a.corkage))}</span>` : "",
+  ].filter(Boolean);
+  const base = [s.group ? "<em>회식 적합</em>" : "", ...am, s.local && am.length < 2 ? "<span>동네 맛집</span>" : ""].filter(Boolean);
+  return base.length ? `<div class="tags">${base.slice(0, 4).join("")}</div>` : "";
 };
+
+// 인원 프리셋 (대표 인원 = 필터 계산용, 10명 이상이면 회식 적합만)
+const SIZES = [
+  { n: 1, label: "혼밥", sub: "1명" },
+  { n: 2, label: "둘이서", sub: "2명" },
+  { n: 4, label: "소모임", sub: "3~4명" },
+  { n: 8, label: "팀 회식", sub: "5~9명" },
+  { n: 12, label: "대규모", sub: "10명+" },
+];
+const sizeOf = (hc) => [...SIZES].reverse().find((z) => hc >= z.n) || SIZES[0];
+const PREFS = [
+  { k: "room", label: "룸", icon: "users" },
+  { k: "park", label: "주차", icon: "route" },
+  { k: "cork", label: "콜키지", icon: "cocktail" },
+];
+const PREF_OK = {
+  room: (a) => a.room?.state === "yes",
+  park: (a) => ["valet", "free", "yes"].includes(a.parking?.state),
+  cork: (a) => ["free", "paid", "yes"].includes(a.corkage?.state),
+};
+
+// 상세 화면 편의 정보 줄 (블로그 언급 근거 + 출처)
+function amenityRows(s) {
+  const a = s.photo?.amenities;
+  if (s.photo === undefined) return `<li class="am-loading">${svg("users", 20)}<div><b>룸·주차·콜키지 확인 중…</b></div></li>`;
+  const src = (x) => (x?.sources?.[0] ? ` · <a href="${esc(x.sources[0])}" target="_blank" rel="noopener nofollow">출처</a>` : "");
+  const note = (x) => `블로그 ${x.count}건 언급${x.mixed ? " · 블로그마다 다름" : ""}${src(x)}`;
+  const rows = [];
+  if (a?.room) rows.push(`<li>${svg("users", 20)}<div><b>${esc(roomLabel(a.room))}</b><span>${note(a.room)}</span></div></li>`);
+  else rows.push(`<li class="dim">${svg("users", 20)}<div><b>룸 정보 없음</b><span>블로그 언급 없음 · 매장 문의</span></div></li>`);
+  rows.push(
+    `<li${a?.parking ? "" : ' class="dim"'}>${svg("route", 20)}<div><b>${a?.parking ? esc(parkLabel(a.parking)) : "주차 정보"}</b><span>${a?.parking ? note(a.parking) + " · " : ""}<a href="#" data-eatpl="${esc(s.id)}">정확한 주차 정보는 잇플에서</a></span></div></li>`
+  );
+  if (a?.corkage) rows.push(`<li>${svg("cocktail", 20)}<div><b>${esc(corkLabel(a.corkage))}</b><span>${note(a.corkage)}</span></div></li>`);
+  return rows.join("");
+}
 function addBtn(s, cls) {
   const on = inCand(s.id);
   const full = state.candidates.length >= CONFIG.maxCandidates;
@@ -334,7 +420,9 @@ function renderResults() {
       ? MODES[state.mode].label
       : o.kind === "store"
         ? `${o.name} 근처 ${fmtDist(state.radius)}`
-        : `${o.kind === "place" ? o.name : o.dong || "내 주변"} ${fmtDist(state.radius)}`;
+        : o.kind === "area"
+          ? `${o.name} 일대`
+          : `${o.kind === "place" ? o.name : o.dong || "내 주변"} ${fmtDist(state.radius)}`;
   const n = state.total > state.stores.length ? `${state.total}곳(상위 ${state.stores.length})` : `${state.stores.length}곳`;
   $("resultCount").textContent = `${n} · ${where}`;
   renderStatus();
@@ -439,6 +527,7 @@ $("pvTrack").addEventListener("scroll", () => {
 
 // 미리보기·상세·결정 화면 공통 버튼 처리
 function onAction(e) {
+  if (e.target.closest("a[data-eatpl]")) e.preventDefault();
   const t = e.target.closest("[data-eatpl],[data-add],[data-share-one],[data-next],[data-detail],[data-add-second],[data-rm],[data-tone]");
   if (!t) return;
   const d = t.dataset;
@@ -498,10 +587,11 @@ function openDetail(s, srcEl) {
 function renderDetail(s, keepScroll = false) {
   const imgs = s.photo?.images || [];
   const on = inCand(s.id);
+  // 썸네일 최대 320px → 화면 폭 전체로 늘리지 않고 정사각 갤러리로 (흐림 방지)
   const hero = imgs.length
-    ? `<div class="dt-track" id="dtTrack">${imgs
-        .map((im) => `<a href="${esc(im.source)}" target="_blank" rel="noopener nofollow"><img src="${esc(im.thumb)}" alt="" referrerpolicy="no-referrer" onerror="this.parentElement.remove()" /></a>`)
-        .join("")}</div><span class="dt-count" id="dtCount">1 / ${imgs.length}</span>`
+    ? `<div class="dt-gallery${imgs.length === 1 ? " one" : ""}" id="dtTrack">${imgs
+        .map((im) => `<a href="${esc(im.source)}" target="_blank" rel="noopener nofollow"><img src="${esc(hi(im.thumb))}" alt="" referrerpolicy="no-referrer" onerror="this.parentElement.remove()" /></a>`)
+        .join("")}</div>`
     : `<div class="dt-tile${s.group ? " g" : ""}">${svg(catIcon(s.category), 56)}</div>`;
   const scroll = $("detail").scrollTop;
   $("detail").innerHTML = `
@@ -516,6 +606,7 @@ function renderDetail(s, keepScroll = false) {
       ${tagsHtml(s)}
       <ul class="dt-rows">
         <li>${svg("clock", 20)}<div><b>${esc(hours(s))}</b><span>${esc(holiday(s))} · 최근 1개월 결제 기준</span></div></li>
+        ${amenityRows(s)}
         ${s.busyTime ? `<li>${svg("fire", 20)}<div><b>${esc(s.busyDay)}요일 ${esc(s.busyTime)} 붐빔</b></div></li>` : ""}
         ${s.customers.length ? `<li>${svg("users", 20)}<div><b>주 고객</b><span>${esc(s.customers.join(", "))}</span></div></li>` : ""}
         <li>${svg("pin", 20)}<div><b>${esc(s.address)}</b>
@@ -532,13 +623,11 @@ function renderDetail(s, keepScroll = false) {
     $("detail").scrollTop = scroll;
     requestAnimationFrame(() => detailMap?.invalidateSize().setView([s.lat, s.lng], 16));
   }
-  $("dtTrack")?.addEventListener("scroll", (e) => {
-    const t = e.currentTarget;
-    $("dtCount").textContent = `${Math.round(t.scrollLeft / t.clientWidth) + 1} / ${imgs.length}`;
-  });
+
   detailMap?.remove();
-  detailMap = L.map("dtMap", { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, boxZoom: false, keyboard: false, attributionControl: false }).setView([s.lat, s.lng], 16);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(detailMap);
+  detailMap = L.map("dtMap", { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, boxZoom: false, keyboard: false }).setView([s.lat, s.lng], 16);
+  detailMap.attributionControl.setPrefix(false);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(detailMap);
   L.marker([s.lat, s.lng], { icon: L.divIcon({ className: "", html: `<div class="mk"><div class="mk-pin hot"><span class="mk-in">${svg(catIcon(s.category), 18)}</span></div></div>`, iconSize: null, iconAnchor: [0, 0] }) }).addTo(detailMap);
 }
 let closing = false;
@@ -800,6 +889,68 @@ function guOf(address) {
   const i = t.findIndex((x, k) => k > 0 && /[구군]$/.test(x));
   return (i > 0 ? t.slice(0, i + 1) : t.slice(0, 2)).join(" ");
 }
+// ---------- 이 지역에서 검색 ----------
+// 사용자가 지도를 직접 옮기면 버튼 표시 → 보이는 영역(검색 바·시트 제외)의 가운데·네 모서리가 속한 구(최대 2개)를
+// 검색하고, 그 영역 안의 매장만 남긴다. 지도는 움직이지 않는다.
+let lastView = null; // 마지막 검색 시점의 보이는 중심·줌
+function visibleBounds() {
+  const c = cover();
+  const nw = map.containerPointToLatLng([c.left, c.top]);
+  const se = map.containerPointToLatLng([window.innerWidth, window.innerHeight - c.bottom]);
+  return { n: nw.lat, w: nw.lng, s: se.lat, e: se.lng };
+}
+const centerOf = (b) => ({ lat: (b.n + b.s) / 2, lng: (b.w + b.e) / 2 });
+function markSearched() {
+  const b = visibleBounds();
+  lastView = { ...centerOf(b), zoom: map.getZoom(), span: meters({ lat: b.n, lng: b.w }, { lat: b.s, lng: b.e }) };
+  $("areaBtn").hidden = true;
+}
+map.on("moveend", () => {
+  if (performance.now() < autoUntil || searching) return markSearched();
+  if (!lastView || state.shared) return;
+  const b = visibleBounds();
+  const moved = meters(lastView, centerOf(b));
+  const zoomed = Math.abs(map.getZoom() - lastView.zoom) >= 1;
+  if (moved > lastView.span * 0.25 || zoomed) {
+    $("areaBtn").hidden = false;
+  }
+});
+function inArea(list, o) {
+  state.radius = 0;
+  for (const s of list) s.dist = meters(o, s);
+  return list.filter((s) => s.lat <= o.b.n && s.lat >= o.b.s && s.lng >= o.b.w && s.lng <= o.b.e);
+}
+$("areaBtn").innerHTML = `${svg("search", 16)}<span>이 지역에서 검색</span>`;
+$("areaBtn").addEventListener("click", async () => {
+  const btn = $("areaBtn");
+  btn.classList.add("busy");
+  const b = visibleBounds();
+  const c = centerOf(b);
+  // 너무 넓으면 의미 없음 (잇플은 구 단위 상위 100건)
+  if (meters({ lat: b.n, lng: b.w }, { lat: b.s, lng: b.e }) > 12000) {
+    btn.classList.remove("busy");
+    return toast("지도를 더 확대해 주세요");
+  }
+  try {
+    const pts = [c, { lat: b.n, lng: b.w }, { lat: b.n, lng: b.e }, { lat: b.s, lng: b.w }, { lat: b.s, lng: b.e }];
+    const regions = await Promise.all(pts.map((p) => regionOf(p.lat, p.lng).catch(() => null)));
+    const center = regions[0] || regions.find(Boolean);
+    if (!center) throw new Error("행정구역 조회 실패");
+    // 가운데 구 + 모서리에서 가장 많이 걸친 다른 구 1개
+    const others = regions.slice(1).filter((r) => r && r.query !== center.query).map((r) => r.query);
+    const second = others.sort((x, y) => others.filter((v) => v === y).length - others.filter((v) => v === x).length)[0];
+    clearOrigin();
+    state.origin = { kind: "area", ...c, b, name: center.dong || center.query, queries: [center.query, second].filter(Boolean) };
+    $("loc").value = `${state.origin.name} 일대`;
+    await run();
+  } catch (e) {
+    toast(e.message || "검색 실패");
+  } finally {
+    btn.classList.remove("busy");
+    markSearched();
+  }
+});
+
 function clearOrigin() {
   if (!state.origin) return;
   state.origin = null;
@@ -841,7 +992,7 @@ $("locateBtn").addEventListener("click", () => {
         await run();
       } catch (e) {
         toast(e.message);
-        map.setView([o.lat, o.lng], 16);
+        auto(() => map.setView([o.lat, o.lng], 16));
       } finally {
         btn.classList.remove("busy");
       }
@@ -891,6 +1042,7 @@ if (isKakaoInApp()) {
   $("inapp").hidden = false;
 }
 renderTabs();
+renderPrefs();
 renderFilterCount();
 renderTray();
 const shared = readShare();

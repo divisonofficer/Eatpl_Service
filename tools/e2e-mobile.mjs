@@ -139,6 +139,21 @@ await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Ent
 await until(`document.getElementById('resultCount').textContent.includes('강남역')`, 15000);
 check("enterBeforeSuggest", await ev(`document.getElementById('resultCount').textContent.includes('강남역')`), await ev(`document.getElementById('resultCount').textContent`));
 
+// 13) 지도를 끌어 옮기면 '이 지역에서 검색' → 보이는 영역 안의 매장
+await load(URL0); await sleep(1500);
+const btnBefore = await ev(`document.getElementById('areaBtn').hidden`);
+await send("Input.dispatchMouseEvent", { type: "mousePressed", x: 200, y: 300, button: "left", clickCount: 1 });
+for (let i = 1; i <= 12; i++) { await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 200 - i * 14, y: 300 + i * 4, button: "left", buttons: 1 }); await sleep(20); }
+await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: 32, y: 348, button: "left", clickCount: 1 });
+await until(`!document.getElementById('areaBtn').hidden`, 4000);
+const shown = await ev(`!document.getElementById('areaBtn').hidden`);
+await shot("10-area-btn");
+await ev(`document.getElementById('areaBtn').click()`);
+await until(`document.getElementById('resultCount').textContent.includes('일대')`, 20000); await sleep(800);
+const area = await ev(`(() => { const m = document.querySelector('#map')._leaflet_id; return { title: document.getElementById('resultCount').textContent, rows: document.querySelectorAll('.row').length, hidden: document.getElementById('areaBtn').hidden }; })()`);
+check("searchThisArea", btnBefore && shown && area.title.includes("일대") && area.hidden, area);
+await shot("11-area");
+
 check("noErrors", errors.length === 0, errors.slice(0, 3));
 const failed = Object.entries(R).filter(([, v]) => !v.ok);
 console.log(JSON.stringify(R, null, 2));

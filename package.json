@@ -10,5 +10,9 @@
   },
   "engines": {
     "node": "22.x"
+  },
+  "dependencies": {
+    "jpeg-js": "^0.4.4",
+    "onnxruntime-web": "^1.31.1"
   }
 }

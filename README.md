@@ -5,7 +5,8 @@
 ## 실행
 
 ```bash
-npm run dev          # = node server.mjs → http://localhost:8000 (의존성 없음, Node 22+)
+npm install          # onnxruntime-web, jpeg-js (사진 내용 검사)
+npm run dev          # = node server.mjs → http://localhost:8000 (Node 22+)
 npm test             # 사진 필터 단위 테스트
 npm run e2e          # 모바일 e2e (서버 실행 중일 때)
 ```
@@ -30,7 +31,10 @@ js/sheet.js           바텀시트 스냅
 js/suggest.js         검색어 추천 (구·역·장소)
 js/share.js           후보 공유 링크 (서버 저장 없음)
 lib/relay.mjs         API 중계 + CDN 캐시 헤더 (로컬·Vercel 공용)
-lib/photos.mjs        사진 결정론 필터 (단위 테스트: test/)
+lib/photos.mjs        사진 텍스트 검증 (이름·주소·전화로 출처 글 검증)
+lib/vision.mjs        사진 내용 검사 (얼굴 감지 + ImageNet 분류, onnxruntime-web WASM)
+lib/amenities.mjs     룸·룸비·콜키지·주차 추출 (검증된 블로그 글 언급)
+models/               ONNX 모델 (UltraFace, MobileNetV2 int8) — models/README.md
 lib/vercel.mjs        Vercel 함수 어댑터
 api/**.mjs            Vercel 함수 (경로만 지정)
 server.mjs            로컬 개발 서버 (배포 제외)
@@ -68,6 +72,14 @@ k-skill-proxy 한도(IP당 60회/분)를 서비스 전체가 나눠 쓰므로 �
 - `srtTime`/`endTime`은 최초/최종 결제 시각이라 `06:25~05:54`처럼 사실상 24시간으로 찍히는 매장이 많음
 - 대분류(중국음식·일식회집 등)로 검색하면 응답 업종은 소분류로 와서 치킨·양꼬치 등이 섞임
 - 가맹점명이 법인명(`주식회사 ○○`)으로 오는 경우 있음
+
+### 매장 사진·편의 정보 파이프라인 (`/api/photos`, 매장당 카카오 7회 호출, 1일 캐시)
+
+1. 카카오 로컬(장소·지번·전화) + 이미지 검색 + 블로그 검색 5회(이름+도로명, 이름+동, +룸, +콜키지, +주차)
+2. 텍스트 검증: 이미지 출처 글이 이 매장 글인지 (이름 + 도로명/지번/전화, 다른 주소면 탈락, 인물·방송 키워드 탈락)
+3. 내용 검사: 320px 썸네일로 얼굴(점수≥0.97·면적≥3%) / 스티커·제품·문서류(확률 합≥0.3) 탈락 — 실데이터 68장 검수로 정한 값
+4. 편의 정보: 검증된 글에서 룸(룸비·최소 주문)·콜키지(금액)·주차(발렛·무료 시간·협소·불가) 추출, 다수결 + "블로그마다 다름"
+   — 잇플 API·상세 페이지에 없는 정보. 언급 없음 ≠ 없음 → 필터가 아니라 "우선 보기" 정렬로만 사용
 
 ### 매장 사진
 

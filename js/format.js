@@ -1,3 +1,4 @@
+import { parkLabel, corkLabel } from "./amenities-fmt.js";
 export const hhmm = (t) => (t && t.length === 4 ? `${t.slice(0, 2)}:${t.slice(2)}` : "-");
 
 // 최초~최종 결제 시각이 하루를 거의 다 덮으면(예: 0600~0559) 24시간으로 표기
@@ -42,8 +43,15 @@ const ICON_OF = [
 ];
 export const catIcon = (c) => (ICON_OF.find(([re]) => re.test(c || "")) || [0, "utensils"])[1];
 
+const parkShort = (p) => parkLabel(p);
+const corkShort = (c) => corkLabel(c);
+
 export function buildMessage(list, { modeNoun, tone, link }) {
-  const line = (s, i) => `${i + 1}) ${s.name} (${catLabel(s.category)} · ${area(s)} · ${holiday(s)})`;
+  const extra = (s) => {
+    const a = s.photo?.amenities || {};
+    return [a.room?.state === "yes" ? "룸" : "", a.parking ? parkShort(a.parking) : "", a.corkage && a.corkage.state !== "no" ? corkShort(a.corkage) : ""].filter(Boolean);
+  };
+  const line = (s, i) => `${i + 1}) ${s.name} (${[catLabel(s.category), area(s), holiday(s), ...extra(s)].join(" · ")})`;
   // 1차·2차가 섞여 있으면 단계별로 묶는다
   const staged = list.some((s) => s.stage) && new Set(list.map((s) => s.stage || "")).size > 1;
   let body;

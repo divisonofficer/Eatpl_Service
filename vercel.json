@@ -2,11 +2,20 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "buildCommand": "",
-  "installCommand": "",
   "outputDirectory": ".",
   "functions": {
-    "api/**/*.mjs": {
+    "api/eatpl/search.mjs": {
       "maxDuration": 20
+    },
+    "api/kakao/keyword.mjs": {
+      "maxDuration": 20
+    },
+    "api/kakao/coord2region.mjs": {
+      "maxDuration": 20
+    },
+    "api/photos.mjs": {
+      "maxDuration": 30,
+      "includeFiles": "{models/**,node_modules/onnxruntime-web/dist/ort.node.min.mjs,node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs,node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm}"
     }
   },
   "headers": [
