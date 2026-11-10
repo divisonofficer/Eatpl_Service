@@ -103,6 +103,41 @@ R.locate = await ev(`({
 })`);
 await shot("08-locate");
 
+// 9) 1차 → 2차
+await send("Page.navigate", { url: process.argv[2] || "http://localhost:8000/" });
+for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.querySelectorAll('.card').length > 0`)) break; }
+await sleep(600);
+R.tabs = await ev(`[...document.querySelectorAll('#modeTabs button')].map(b => b.textContent)`);
+await ev(`document.querySelector('.card').click()`); await sleep(500);
+await ev(`document.querySelector('.card.open [data-next]').click()`);
+for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.getElementById('resultCount').textContent.includes('🍻')`)) break; }
+await sleep(1200);
+R.secondStop = await ev(`({
+  title: document.getElementById('resultCount').textContent,
+  tab: document.querySelector('#modeTabs [aria-selected=true]').textContent,
+  input: document.getElementById('loc').value,
+  cand: document.getElementById('candCount').textContent,
+  walk: [...document.querySelectorAll('.card .dist')].slice(0, 4).map(d => d.textContent),
+  firstMarker: document.querySelector('.first-stop')?.textContent,
+})`);
+await ev(`[...document.querySelectorAll('.add')].find(b => !b.classList.contains('on'))?.click()`); await sleep(200);
+await ev(`document.getElementById('candBtn').click()`); await sleep(300);
+R.stagedMsg = await ev(`document.getElementById('message').value.split('\\n📍')[0]`);
+await ev(`document.getElementById('msgDialog').close()`);
+await shot("09-second");
+
+// 10) 검색어 추천: '천호역' 입력 → 🚇 추천 → Enter
+await ev(`(() => { const i = document.getElementById('loc'); i.focus(); i.value = ''; i.dispatchEvent(new Event('input')); })()`);
+await send("Input.insertText", { text: "천호역" });
+for (let i = 0; i < 20; i++) { await sleep(250); if (await ev(`[...document.querySelectorAll('#suggest li')].some(l => l.textContent.includes('🚇'))`)) break; }
+R.suggest = await ev(`[...document.querySelectorAll('#suggest li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim())`);
+await shot("10-suggest");
+await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+for (let i = 0; i < 40; i++) { await sleep(300); if (await ev(`document.getElementById('resultCount').textContent.includes('천호')`)) break; }
+await sleep(1500);
+R.placeSearch = await ev(`({ title: document.getElementById('resultCount').textContent, input: document.getElementById('loc').value, dists: [...document.querySelectorAll('.card .dist')].slice(0, 4).map(d => d.textContent) })`);
+await shot("11-place");
+
 console.log(JSON.stringify(R, null, 2));
 console.log("console:", logs.slice(0, 10));
 ws.close(); proc.kill();

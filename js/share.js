@@ -11,12 +11,12 @@ const pack = (s) => ({
   n: s.name, c: s.category, a: s.address, u: s.url,
   t: s.tel || undefined, la: +s.lat.toFixed(6), lo: +s.lng.toFixed(6),
   r: s.rank, ra: s.rankAll, g: s.group ? 1 : 0, l: s.local ? 1 : 0,
-  o: s.open, cl: s.close, h: s.holidays, bd: s.busyDay, bt: s.busyTime,
+  st: s.stage || undefined, o: s.open, cl: s.close, h: s.holidays, bd: s.busyDay, bt: s.busyTime,
 });
 const unpack = (p) => ({
   id: p.u, name: p.n, category: p.c, address: p.a, url: p.u, tel: p.t || "", lat: p.la, lng: p.lo,
   rank: p.r, rankAll: p.ra, group: !!p.g, local: !!p.l, open: p.o || "", close: p.cl || "",
-  holidays: p.h || [], busyDay: p.bd || "", busyTime: p.bt || "", customers: [], kw: false,
+  holidays: p.h || [], stage: p.st || "", busyDay: p.bd || "", busyTime: p.bt || "", customers: [], kw: false,
 });
 
 const isMerUrl = (u) => typeof u === "string" && /^https:\/\/web\.paybooc\.ai\/mer\/web\/profile\/[A-Za-z0-9_-]+$/.test(u);

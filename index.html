@@ -15,15 +15,11 @@
   <header id="top">
     <form class="search" id="filters" role="search">
       <span class="brand" aria-hidden="true">회식픽</span>
-      <input id="loc" list="locList" placeholder="동네 (예: 서울 종로구)" autocomplete="off" enterkeyhint="search" />
-      <datalist id="locList">
-        <option value="서울 종로구"></option><option value="서울 중구"></option>
-        <option value="서울 강남구 역삼동"></option><option value="서울 영등포구 여의도동"></option>
-        <option value="서울 마포구"></option><option value="서울 강동구"></option>
-      </datalist>
+      <input id="loc" placeholder="동네·역·회사 (예: 천호역)" autocomplete="off" enterkeyhint="search" />
       <label class="headcount" title="인원">👥<input id="headcount" type="number" min="1" max="99" value="12" inputmode="numeric" /></label>
       <button type="submit" class="go" aria-label="검색">검색</button>
     </form>
+    <ul id="suggest" class="suggest" role="listbox" hidden></ul>
     <nav class="scroller tabs" id="modeTabs" role="tablist"></nav>
     <div class="scroller chips" id="chips"></div>
   </header>

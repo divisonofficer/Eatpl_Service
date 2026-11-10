@@ -4,6 +4,7 @@ import { MODES, ALL_CATEGORIES, applyMode } from "./modes.js";
 import { hours, holiday, rankLabel, area, icon, buildMessage } from "./format.js";
 import { createSheet } from "./sheet.js";
 import { shareLink, readShare, isKakaoInApp, kakaoExternalUrl } from "./share.js";
+import { attachSuggest } from "./suggest.js";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -180,7 +181,8 @@ function renderTabs() {
     .join("");
 }
 function renderChips() {
-  $("chips").innerHTML = ALL_CATEGORIES.map(
+  const ordered = [...ALL_CATEGORIES.filter((c) => state.categories.has(c)), ...ALL_CATEGORIES.filter((c) => !state.categories.has(c))];
+  $("chips").innerHTML = ordered.map(
     (c) => `<button type="button" class="chip" data-cat="${esc(c)}" aria-pressed="${state.categories.has(c)}">${esc(c)}</button>`
   ).join("");
 }
@@ -188,6 +190,7 @@ function renderChips() {
 $("modeTabs").addEventListener("click", (e) => {
   const k = e.target.closest("[data-mode]")?.dataset.mode;
   if (!k || k === state.mode) return;
+  if (state.origin?.kind === "store") clearOrigin();
   state.mode = k;
   state.categories = new Set(MODES[k].categories);
   renderTabs();
@@ -220,7 +223,7 @@ async function run() {
   }
   const mode = MODES[state.mode];
   if (!$("loc").value.trim()) $("loc").value = CONFIG.defaultLocation;
-  const location = $("loc").value.trim();
+  const location = state.origin?.query || $("loc").value.trim();
   const categories = [...state.categories];
   $("resultCount").textContent = "검색 중…";
   try {
@@ -258,7 +261,7 @@ function card(s) {
     }</div>
     <div class="info">
       <div class="name">${esc(s.name)}</div>
-      <div class="meta">${s.dist != null ? `<span class="dist">${fmtDist(s.dist)}</span> · ` : ""}<span class="rank">${esc(rankLabel(s))}</span> · ${esc(s.category)} · ${esc(area(s))}</div>
+      <div class="meta">${s.dist != null ? `<span class="dist">${state.origin?.kind === "store" ? fmtWalk(s.dist) : fmtDist(s.dist)}</span> · ` : ""}<span class="rank">${esc(rankLabel(s))}</span> · ${esc(s.category)} · ${esc(area(s))}</div>
       <div class="meta">${esc(hours(s))} · ${esc(holiday(s))}</div>
       <div class="tags">${s.group ? "<em>회식 적합</em>" : ""}${s.local ? "<span>동네 맛집</span>" : ""}${
         s.busyTime ? `<span>${esc(s.busyDay)} ${esc(s.busyTime)} 붐빔</span>` : ""
@@ -270,6 +273,7 @@ function card(s) {
     <div class="detail">
       ${photosHtml(s)}
       <button type="button" class="cta" data-eatpl="${esc(s.id)}"><span>잇플에서 상세 보기</span></button>
+      ${state.mode === "dinner" && !state.shared ? `<button type="button" class="next-stop" data-next="${esc(s.id)}">🍻 이 근처 2차 찾기</button>` : ""}
       <dl>
         <dt>주소</dt><dd>${esc(s.address)}</dd>
         <dt>영업</dt><dd>${esc(hours(s))} · ${esc(holiday(s))}</dd>
@@ -288,7 +292,11 @@ function renderResults() {
   const label = state.shared
     ? "공유받은 후보"
     : state.origin
-      ? `📍 ${state.origin.dong || "내 주변"} ${fmtDist(state.radius)} 이내`
+      ? state.origin.kind === "store"
+        ? `🍻 ${state.origin.name} 근처 ${fmtDist(state.radius)}`
+        : state.origin.kind === "place"
+        ? `📍 ${state.origin.name} ${fmtDist(state.radius)} 이내`
+        : `📍 ${state.origin.dong || "내 주변"} ${fmtDist(state.radius)} 이내`
       : MODES[state.mode].label;
   $("resultCount").textContent =
     state.total > state.stores.length ? `${label} ${state.total}곳 · 상위 ${state.stores.length}` : `${label} ${state.stores.length}곳`;
@@ -343,6 +351,8 @@ async function resolveKakao(s) {
 }
 
 $("results").addEventListener("click", (e) => {
+  const nx = e.target.closest("[data-next]");
+  if (nx) return findSecondStop(state.stores.find((s) => s.id === nx.dataset.next));
   const ep = e.target.closest("[data-eatpl]");
   if (ep) return openEatpl(state.stores.find((s) => s.id === ep.dataset.eatpl));
   const add = e.target.closest("[data-add]");
@@ -375,7 +385,9 @@ function toggleCandidate(id) {
   const i = state.candidates.findIndex((c) => c.id === id);
   if (i >= 0) state.candidates.splice(i, 1);
   else if (state.candidates.length < CONFIG.maxCandidates) {
-    state.candidates.push(state.stores.find((s) => s.id === id));
+    const s = state.stores.find((v) => v.id === id);
+    s.stage = state.mode === "dinner" ? "1차" : state.mode === "after" ? "2차" : "";
+    state.candidates.push(s);
     if (state.candidates.length === CONFIG.maxCandidates) toast("후보 3곳 선택됨");
   }
   renderResults();
@@ -488,10 +500,11 @@ function meters(a, b) {
 }
 // 모드 정렬(매출 랭킹 등)은 유지하고, 반경으로만 거른다
 function nearby(list, o) {
+  const radii = o.radii || RADII;
   for (const s of list) s.dist = meters(o, s);
-  for (const r of RADII) {
-    const inR = list.filter((s) => s.dist <= r);
-    if (inR.length >= MIN_NEAR || r === RADII.at(-1)) {
+  for (const r of radii) {
+    const inR = list.filter((s) => s.dist <= r && s.id !== o.id);
+    if (inR.length >= MIN_NEAR || r === radii.at(-1)) {
       state.radius = r;
       return inR;
     }
@@ -510,6 +523,15 @@ function clearOrigin() {
 
 function drawMe(o) {
   meLayer.clearLayers();
+  if (o.kind === "store" || o.kind === "place") {
+    const badge = o.kind === "store" ? "<b>1차</b>" : "<b class=\"pl\">📍</b>";
+    L.marker([o.lat, o.lng], {
+      icon: L.divIcon({ className: "", html: `<div class="first-stop">${badge}${esc(o.name)}</div>`, iconSize: null }),
+      interactive: false,
+      zIndexOffset: 200000,
+    }).addTo(meLayer);
+    return;
+  }
   if (o.acc && o.acc < 2000) L.circle([o.lat, o.lng], { radius: o.acc, color: "#1a73e8", weight: 1, fillOpacity: 0.08, interactive: false }).addTo(meLayer);
   L.marker([o.lat, o.lng], { icon: L.divIcon({ className: "", html: '<div class="me-dot"></div>', iconSize: null }), interactive: false, zIndexOffset: 200000 }).addTo(meLayer);
 }
@@ -530,8 +552,8 @@ $("locateBtn").addEventListener("click", () => {
       drawMe(o);
       try {
         const region = await regionOf(o.lat, o.lng);
-        state.origin = { ...o, ...region };
-        $("loc").value = region.query;
+        state.origin = { kind: "me", ...o, ...region };
+        $("loc").value = `내 위치 · ${region.dong}`;
         btn.classList.add("on");
         await run();
       } catch (e) {
@@ -547,6 +569,54 @@ $("locateBtn").addEventListener("click", () => {
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
   );
+});
+
+// ---------- 1차 → 2차 ----------
+// 1차 장소를 원점으로 도보 반경(300m → 600m → 1km) 안의 2차 후보를 찾는다
+const WALK_RADII = [300, 600, 1000];
+const fmtWalk = (m) => `도보 ${Math.max(1, Math.round(m / 75))}분`; // 성인 보행 약 75m/분
+// "서울 종로구 …" → "서울 종로구", "경기 용인시 기흥구 …" → "경기 용인시 기흥구"
+function guOf(address) {
+  const t = String(address).split(/\s+/);
+  const i = t.findIndex((x, k) => k > 0 && /[구군]$/.test(x));
+  if (i > 0) return t.slice(0, i + 1).join(" ");
+  return t.slice(0, 2).join(" ");
+}
+function findSecondStop(s) {
+  if (!s) return;
+  if (!state.candidates.some((c) => c.id === s.id) && state.candidates.length < CONFIG.maxCandidates) {
+    s.stage = "1차";
+    state.candidates.push(s);
+    renderTray();
+  }
+  state.origin = { kind: "store", id: s.id, name: s.name, lat: s.lat, lng: s.lng, radii: WALK_RADII, query: guOf(s.address) };
+  drawMe(state.origin);
+  $("locateBtn").classList.remove("on");
+  $("loc").value = `${s.name} 근처`;
+  state.mode = "after";
+  state.categories = new Set(MODES.after.categories);
+  renderTabs();
+  renderChips();
+  run();
+}
+
+// ---------- 검색어 추천 ----------
+const PLACE_RADII = [500, 1000, 2000];
+attachSuggest({
+  input: $("loc"),
+  box: $("suggest"),
+  onPick(it) {
+    clearOrigin();
+    if (it.kind === "gu") {
+      $("loc").value = it.label;
+    } else {
+      // 역·장소: 그 지점 기준 반경 검색 (잇플 검색은 그 장소가 속한 구로)
+      state.origin = { kind: "place", name: it.label, lat: it.lat, lng: it.lng, radii: PLACE_RADII, query: guOf(it.address) };
+      drawMe(state.origin);
+    }
+    $("loc").blur();
+    run();
+  },
 });
 
 // ---------- init ----------

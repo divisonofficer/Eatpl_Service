@@ -30,17 +30,23 @@ const ICONS = {
 export const icon = (s) => ICONS[s.category] || "🍽️";
 
 export function buildMessage(list, { modeNoun, tone, link }) {
-  const lines = list.map((s, i) => `${i + 1}) ${s.name} (${s.category} · ${area(s)} · ${holiday(s)})`);
+  const line = (s, i) => `${i + 1}) ${s.name} (${s.category} · ${area(s)} · ${holiday(s)})`;
+  // 1차·2차가 섞여 있으면 단계별로 묶는다
+  const staged = list.some((s) => s.stage) && new Set(list.map((s) => s.stage || "")).size > 1;
+  let body;
+  if (staged) {
+    body = [];
+    let n = 0;
+    for (const st of ["1차", "2차", ""]) {
+      const group = list.filter((s) => (s.stage || "") === st);
+      if (!group.length) continue;
+      body.push(`[${st || "기타"}]`, ...group.map((s) => line(s, n++)));
+    }
+  } else body = list.map(line);
+  const noun = staged ? "회식" : modeNoun;
   const tail = link ? ["", `📍 위치·상세 보기: ${link}`] : [];
   if (tone === "casual") {
-    return [`다들 ${modeNoun} 장소 후보 골라봤어요!`, "", ...lines, ...tail, "", "편한 곳 알려주시면 바로 예약할게요 🙂"].join("\n");
+    return [`다들 ${noun} 장소 후보 골라봤어요!`, "", ...body, ...tail, "", "편한 곳 알려주시면 바로 예약할게요 🙂"].join("\n");
   }
-  return [
-    `안녕하세요, 이번 ${modeNoun} 장소 후보 공유드립니다.`,
-    "",
-    ...lines,
-    ...tail,
-    "",
-    "편하신 곳 말씀 주시면 예약하겠습니다. 감사합니다.",
-  ].join("\n");
+  return [`안녕하세요, 이번 ${noun} 장소 후보 공유드립니다.`, "", ...body, ...tail, "", "편하신 곳 말씀 주시면 예약하겠습니다. 감사합니다."].join("\n");
 }

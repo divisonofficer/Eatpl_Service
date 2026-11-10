@@ -10,12 +10,20 @@ const kwBonus = (s) => (s.kw ? -3 : 0);
 
 export const MODES = {
   dinner: {
-    label: "저녁 회식",
+    label: "1차 회식",
     noun: "회식",
     keyword: "회식",
     categories: ["고기구이", "갈비전문점", "한정식", "중국음식", "일식회집", "곱창전골/구이", "족발/보쌈"],
     filter: (s) => s.group,
     score: (s) => s.rank + kwBonus(s) - (s.busyTime === "저녁" ? 2 : 0),
+  },
+  after: {
+    label: "2차",
+    noun: "2차",
+    keyword: "퇴근후한잔",
+    categories: ["주점", "칵테일바", "치킨", "양꼬치", "곱창전골/구이"],
+    filter: (s) => closeAbs(s) >= 2100,
+    score: (s) => s.rank + kwBonus(s),
   },
   lunch: {
     label: "점심 회식",
@@ -24,14 +32,6 @@ export const MODES = {
     categories: ["일반한식", "찜/탕/찌개", "한정식", "중국음식", "일식회집"],
     filter: (s) => s.open !== "" && Number(s.open) <= 1130,
     score: (s) => s.rank + (s.busyTime === "점심" ? 1000 : 0), // 점심에 붐비는 집은 뒤로
-  },
-  after: {
-    label: "퇴근 후 한잔",
-    noun: "퇴근 후 한잔",
-    keyword: "퇴근후한잔",
-    categories: ["주점", "칵테일바", "치킨", "양꼬치", "곱창전골/구이"],
-    filter: (s) => closeAbs(s) >= 2100,
-    score: (s) => s.rank + kwBonus(s),
   },
   late: {
     label: "야근 야식",
