@@ -61,8 +61,20 @@ export function recommend(s, ctx) {
   if (s.group) add(W.group[mode] * scale, "회식 적합");
   // 1위 고객 30~50대 남성
   if (OFFICE.test(s.customers?.[0] || "")) add(W.office[mode] * scale, "30~50대 남성 단골");
-  // 팀 연령대
-  if (ctx.teamAges?.size && s.customers?.slice(0, 3).some((c) => [...ctx.teamAges].some((a) => c.startsWith(a)))) add(6, "우리 팀 또래 단골");
+  // 팀 연령대 × 팀 구성(성별): 둘 다 맞는 단골층이 있으면 가장 구체적인 이유로
+  const top3 = (s.customers || []).slice(0, 3);
+  const sexOf = (c) => (c.endsWith("여성") ? "female" : c.endsWith("남성") ? "male" : null);
+  const ages = [...(ctx.teamAges || [])];
+  const g = ctx.teamGender; // male | female | mixed | null
+  const exact = ages.length && (g === "male" || g === "female") ? top3.find((c) => ages.some((a) => c.startsWith(a)) && sexOf(c) === g) : null;
+  if (exact) add(8, `${exact.replace(/(남성|여성)$/, " $1")} 단골`);
+  else if (ages.length && top3.some((c) => ages.some((a) => c.startsWith(a)))) add(6, "우리 팀 또래 단골");
+  if (!exact && g) {
+    const sexes = top3.map(sexOf);
+    if (g === "female" && (sexOf(top3[0] || "") === "female" || sexes.filter((x) => x === "female").length >= 2)) add(6, "여성 손님 많은 곳");
+    else if (g === "male" && sexOf(top3[0] || "") === "male") add(4, "남성 손님 많은 곳");
+    else if (g === "mixed" && sexes.includes("male") && sexes.includes("female")) add(3, "남녀 고루 찾는 곳");
+  }
   // 붐빔
   if (slot && s.busyTime) {
     if (s.busyTime === slot.tizn && ctx.day && s.busyDay === ctx.day) add(-6, `${ctx.day} ${slot.label} 붐빔 · 예약 권장`);

@@ -19,6 +19,7 @@ const state = {
   headcount: 8,
   day: null, // null = 오늘
   teamAges: new Set(),
+  teamGender: null, // male | female | mixed
   excluded: 0, // 휴무·영업 외로 제외된 수
   prefs: new Set(), // 우선 보기: room | park | cork
   all: [], // 검색 결과 전체 (정렬됨)
@@ -267,7 +268,7 @@ function renderCatGrid() {
 
 }
 $("filterBtn").addEventListener("click", () => {
-  pending = { cats: new Set(state.categories), ages: new Set(state.teamAges) };
+  pending = { cats: new Set(state.categories), ages: new Set(state.teamAges), gender: state.teamGender };
   renderCatGrid();
   renderAges();
   $("filterDialog").showModal();
@@ -335,7 +336,7 @@ function scheduleReapply() {
   }, 350);
 }
 $("filterReset").addEventListener("click", () => {
-  pending = { cats: new Set(MODES[state.mode].categories), ages: new Set() };
+  pending = { cats: new Set(MODES[state.mode].categories), ages: new Set(), gender: null };
   renderAges();
   renderCatGrid();
 });
@@ -343,6 +344,7 @@ $("filterApply").addEventListener("click", () => {
   if (!pending.cats.size) return toast("업종을 선택하세요");
   state.categories = pending.cats;
   state.teamAges = pending.ages;
+  state.teamGender = pending.gender;
   $("filterDialog").close();
   renderFilterCount();
   run();
@@ -445,6 +447,7 @@ const recCtx = (s) => ({
   headcount: state.headcount,
   day: state.day || todayKST(),
   teamAges: state.teamAges,
+  teamGender: state.teamGender,
   amenity: amenityStates(amenOf(s)),
   hasPhoto: !!(s.photo?.pin || s.photo?.images?.length),
   partner: [], // 제휴 데이터(오늘 현황·시간대 분포·방문 후 이동)를 받으면 여기에 특징으로 추가
@@ -456,17 +459,28 @@ function rankStores(list) {
   state.excluded = list.length - ok.length;
   return ok.sort((a, b) => b.rec.score - a.rec.score || a.rank - b.rank || a.id.localeCompare(b.id));
 }
+// 룸·주차·콜키지는 아이콘·상세 줄로 따로 보이므로 이유 문구에서는 뺀다 (점수에는 반영)
+const AMENITY_REASON = /^(룸 있어요|룸 없어요|주차 가능|콜키지 가능)$/;
+const recNoAmen = (rec) => rec && { ...rec, reasons: rec.reasons.filter((r) => !AMENITY_REASON.test(r.t)) };
 function whyHtml(s) {
-  const { good, warn } = topReasons(s.rec);
+  const { good, warn } = topReasons(recNoAmen(s.rec));
   if (!good.length && !warn) return "";
   return `<div class="why">${good.map((r) => `<span>${esc(r.t)}</span>`).join("")}${warn ? `<span class="warn">${esc(warn.t)}</span>` : ""}</div>`;
 }
 
 // 팀 연령대 (필터 시트)
 const AGES = ["20대", "30대", "40대", "50대"];
+const GENDERS = [["male", "남성 위주"], ["female", "여성 위주"], ["mixed", "반반"]];
 function renderAges() {
   $("ageRow").innerHTML = AGES.map((a) => `<button type="button" class="pref" data-age="${a}" aria-pressed="${pending.ages.has(a)}">${a}${a === "50대" ? "+" : ""}</button>`).join("");
+  $("genderRow").innerHTML = GENDERS.map(([k, l]) => `<button type="button" class="pref" data-gender="${k}" aria-pressed="${pending.gender === k}">${l}</button>`).join("");
 }
+$("genderRow").addEventListener("click", (e) => {
+  const k = e.target.closest("[data-gender]")?.dataset.gender;
+  if (!k) return;
+  pending.gender = pending.gender === k ? null : k; // 다시 누르면 해제
+  renderAges();
+});
 $("ageRow").addEventListener("click", (e) => {
   const a = e.target.closest("[data-age]")?.dataset.age;
   if (!a) return;
@@ -796,7 +810,7 @@ $("detail").addEventListener("close", () => {
 });
 
 function recDetail(s) {
-  const r = s.rec;
+  const r = recNoAmen(s.rec);
   if (!r || r.blocked || !r.reasons.length) return "";
   return `<div class="rec-box"><b>추천 이유</b><ul>${r.reasons
     .map((x) => `<li class="${x.w > 0 ? "pos" : "neg"}">${svg(x.w > 0 ? "check" : "minus", 14)}${esc(x.t)}</li>`)
@@ -1066,23 +1080,27 @@ function markSearched() {
   lastView = visibleBounds();
   $("areaBtn").hidden = true;
 }
-// 지금 보이는 영역 중 마지막 검색 영역 밖 비율 (위경도 사각형 근사)
-function outsideRatio(cur, prev) {
-  const w = Math.max(0, Math.min(cur.e, prev.e) - Math.max(cur.w, prev.w));
-  const h = Math.max(0, Math.min(cur.n, prev.n) - Math.max(cur.s, prev.s));
-  const area = (cur.e - cur.w) * (cur.n - cur.s);
-  return area > 0 ? 1 - (w * h) / area : 0;
-}
-const OUTSIDE = 0.4; // 화면의 40% 이상이 검색 영역 밖이면 '이 지역에서 검색' 
 const MANY_VISIBLE = 5; // 화면에 결과가 이만큼 보이면 버튼을 띄우지 않는다
 map.on("moveend", () => {
   if (performance.now() < autoUntil || searching) return markSearched();
   if (!lastView || state.shared) return;
-  const b = visibleBounds();
-  const visible = state.stores.filter((s) => s.lat <= b.n && s.lat >= b.s && s.lng >= b.w && s.lng <= b.e).length;
-  // 검색 영역에서 벗어났고, 지금 화면에 결과가 거의 없을 때만
-  $("areaBtn").hidden = outsideRatio(b, lastView) < OUTSIDE || visible >= MANY_VISIBLE;
+  $("areaBtn").hidden = !leftSearchArea();
 });
+// '검색했던 영역을 실제로 벗어났나' — 휴대폰은 보이는 지도가 작아서 '화면의 몇 %' 기준이면 조금만 밀어도 뜬다
+//  1) 보이는 중심이 마지막 검색 영역(10% 여유) 밖이거나, 축소해 보이는 범위가 검색 영역의 2.5배 초과
+//  2) 지도 전체(가려진 곳 포함)에 결과가 5곳 미만
+function leftSearchArea() {
+  const v = visibleBounds();
+  const L0 = lastView;
+  const padLat = (L0.n - L0.s) * 0.1, padLng = (L0.e - L0.w) * 0.1;
+  const c = centerOf(v);
+  const centerOut = c.lat > L0.n + padLat || c.lat < L0.s - padLat || c.lng > L0.e + padLng || c.lng < L0.w - padLng;
+  const zoomedOut = (v.n - v.s) * (v.e - v.w) > 2.5 * (L0.n - L0.s) * (L0.e - L0.w);
+  if (!centerOut && !zoomedOut) return false;
+  const m = map.getBounds();
+  const inMap = state.stores.filter((s) => m.contains([s.lat, s.lng])).length;
+  return inMap < MANY_VISIBLE;
+}
 function inArea(list, o) {
   state.radius = 0;
   for (const s of list) s.dist = meters(o, s);

@@ -53,3 +53,14 @@ test("결정론: 같은 입력이면 같은 결과", () => {
   const s = S({ group: true, busyTime: "저녁", customers: ["30대남성"], dist: 500 });
   assert.deepEqual(recommend(s, ctx({ amenity: { room: "yes", park: "no" } })), recommend(s, ctx({ amenity: { room: "yes", park: "no" } })));
 });
+
+test("팀 구성(성별)·연령×성별 조합", () => {
+  const fem = S({ customers: ["30대여성", "20대여성", "30대남성"] });
+  assert.ok(recommend(fem, ctx({ teamGender: "female" })).reasons.some((r) => r.t === "여성 손님 많은 곳"));
+  assert.ok(!recommend(fem, ctx({ teamGender: "male" })).reasons.some((r) => r.t.includes("손님 많은")));
+  // 연령 + 성별이 같은 단골층 → 가장 구체적인 이유 (또래 단골 대신)
+  const r = recommend(fem, ctx({ teamGender: "female", teamAges: new Set(["30대"]) }));
+  assert.ok(r.reasons.some((x) => x.t === "30대 여성 단골"));
+  assert.ok(!r.reasons.some((x) => x.t === "우리 팀 또래 단골" || x.t === "여성 손님 많은 곳"));
+  assert.ok(recommend(fem, ctx({ teamGender: "mixed" })).reasons.some((x) => x.t === "남녀 고루 찾는 곳"));
+});

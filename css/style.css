@@ -528,3 +528,14 @@ body.previewing .area-btn { top: auto; bottom: calc(var(--pv-h) + 24px); }
   .quick2 .pref .pl { display: none; } /* 좁은 화면: 아이콘만 */
 }
 @media (min-width: 900px) { .cat-btn { background: var(--bg); box-shadow: none; backdrop-filter: none; } .cat-btn.custom { background: var(--c); } }
+.gender-row { margin-top: 6px; }
+/* 높이가 낮은 화면: 필터 시트를 압축해 스크롤 없이 */
+@media (max-height: 640px) {
+  .bottom-dialog .bd-section { padding: 7px 0; }
+  .bottom-dialog .bd-label { margin-bottom: 5px; }
+  .cat-tile { padding: 6px 2px 5px; gap: 2px; }
+  .cat-tile .ic { width: 17px; height: 17px; }
+  .age-row .pref { height: 28px; }
+  .gender-row { margin-top: 4px; }
+  .bd-actions .btn { height: 42px; }
+}

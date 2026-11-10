@@ -154,6 +154,12 @@ await load(URL0); await sleep(1500);
 await send("Input.dispatchMouseEvent", { type: "mousePressed", x: 200, y: 300, button: "left", clickCount: 1 });
 for (let i = 1; i <= 6; i++) { await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 200 - i * 6, y: 300, button: "left", buttons: 1 }); await sleep(20); }
 await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: 164, y: 300, button: "left", clickCount: 1 }); await sleep(800);
+// 여러 방향으로 조금씩 더 움직여도(검색 영역 안) 버튼 없음
+for (const [dx, dy] of [[40, 0], [0, 40], [-60, -30]]) {
+  await send("Input.dispatchMouseEvent", { type: "mousePressed", x: 200, y: 300, button: "left", clickCount: 1 });
+  for (let i = 1; i <= 6; i++) { await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 200 + (dx * i) / 6, y: 300 + (dy * i) / 6, button: "left", buttons: 1 }); await sleep(20); }
+  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: 200 + dx, y: 300 + dy, button: "left", clickCount: 1 }); await sleep(500);
+}
 check("manyVisibleNoButton", await ev(`document.getElementById('areaBtn').hidden`));
 
 // 13) 지도를 끌어 옮기면 '이 지역에서 검색' → 보이는 영역 안의 매장
