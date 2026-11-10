@@ -84,3 +84,14 @@ test("집계: 다수결 + 다르면 mixed, 같은 글은 1번만", () => {
   // 결정론: 입력 순서가 같으면 결과도 같다
   assert.deepEqual(summarizeAmenities(docs), a);
 });
+
+test("유료: 주차 유료·발렛비·콜키지 유료(금액 없이)", () => {
+  assert.deepEqual(extractParking("주차는 유료예요"), { state: "paid" });
+  assert.deepEqual(extractParking("주차비 시간당 3,000원"), { state: "paid" });
+  assert.deepEqual(extractParking("발렛비 3천원 받아요"), { state: "valet", paid: true });
+  assert.deepEqual(extractParking("근처 유료주차장 이용"), { state: "nearby" });
+  assert.deepEqual(extractCorkage("유아의자 있음 콜키지 유료(병당 1만원)"), { state: "paid", won: 10000 });
+  assert.deepEqual(extractCorkage("콜키지 유료"), { state: "paid", won: null });
+  assert.equal(corkLabel({ state: "paid", won: null }), "콜키지 유료");
+  assert.equal(parkLabel({ state: "paid" }), "유료 주차");
+});

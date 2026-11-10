@@ -149,12 +149,23 @@ await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Ent
 await until(`document.getElementById('resultCount').textContent.includes('강남역')`, 15000);
 check("enterBeforeSuggest", await ev(`document.getElementById('resultCount').textContent.includes('강남역')`), await ev(`document.getElementById('resultCount').textContent`));
 
+// 13-0) 결과가 많이 보이는 곳에서 살짝 옮기면 버튼 없음
+await load(URL0); await sleep(1500);
+await send("Input.dispatchMouseEvent", { type: "mousePressed", x: 200, y: 300, button: "left", clickCount: 1 });
+for (let i = 1; i <= 6; i++) { await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 200 - i * 6, y: 300, button: "left", buttons: 1 }); await sleep(20); }
+await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: 164, y: 300, button: "left", clickCount: 1 }); await sleep(800);
+check("manyVisibleNoButton", await ev(`document.getElementById('areaBtn').hidden`));
+
 // 13) 지도를 끌어 옮기면 '이 지역에서 검색' → 보이는 영역 안의 매장
 await load(URL0); await sleep(1500);
 const btnBefore = await ev(`document.getElementById('areaBtn').hidden`);
-await send("Input.dispatchMouseEvent", { type: "mousePressed", x: 200, y: 300, button: "left", clickCount: 1 });
-for (let i = 1; i <= 12; i++) { await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 200 - i * 15, y: 300 - i * 12, button: "left", buttons: 1 }); await sleep(20); }
-await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: 20, y: 156, button: "left", clickCount: 1 });
+// 결과가 거의 없는 곳까지 (두 번 크게 끌기)
+for (let k = 0; k < 2; k++) {
+  // 현위치 버튼(오른쪽 아래)·상단 버튼을 피해 지도 빈 곳에서 시작
+  await send("Input.dispatchMouseEvent", { type: "mousePressed", x: 280, y: 330, button: "left", clickCount: 1 });
+  for (let i = 1; i <= 12; i++) { await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 280 - i * 21, y: 330 - i * 14, button: "left", buttons: 1 }); await sleep(20); }
+  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: 28, y: 162, button: "left", clickCount: 1 }); await sleep(500);
+}
 await until(`!document.getElementById('areaBtn').hidden`, 4000);
 const shown = await ev(`!document.getElementById('areaBtn').hidden`);
 const btnPos = await ev(`(() => { const r = document.getElementById('areaBtn').getBoundingClientRect(); return { y: Math.round(r.top), sheetTop: Math.round(document.getElementById('sheet').getBoundingClientRect().top) }; })()`);
@@ -192,6 +203,13 @@ await until(`!document.getElementById('resultCount').textContent.includes('확�
 const f = await ev(`({ title: document.getElementById('resultCount').textContent, rows: document.querySelectorAll('.row').length, allOn: [...document.querySelectorAll('.row')].every(r => r.querySelectorAll('.am-b.on').length >= 2) })`);
 await ev(`document.querySelector('[data-pref=room]').click()`); await ev(`document.querySelector('[data-pref=park]').click()`); await sleep(600);
 const n1 = await ev(`document.querySelectorAll('.row').length`);
+// 필터를 끈 목록에서 (정밀 확인 끝난) 주차 가능 매장 수 == 주차 필터 결과 수
+await ev(`document.querySelector('[data-pref=park]').click()`);
+await until(`!document.getElementById('resultCount').textContent.includes('확인 중')`, 60000); await sleep(600);
+const parkOn = await ev(`document.querySelectorAll('.row').length`);
+await ev(`document.querySelector('[data-pref=park]').click()`); await sleep(600);
+const parkAll = await ev(`[...document.querySelectorAll('.row')].filter(r => [...r.querySelectorAll('.am-b.on')].some(b => b.textContent.includes('주차'))).length`);
+check("parkFilterConsistent", parkOn === parkAll && parkOn > 0, { parkOn, parkAll });
 check("prefFilter", f.title.includes("룸·주차") && f.rows <= n0 && f.allOn && n1 === n0, { n0, ...f, n1 });
 
 // 16) 추천 이유 + 요일 선택 (휴무 제외)

@@ -294,8 +294,8 @@ function applyPrefs() {
   state.stores = on.length ? state.all.filter((s) => (s.amen || s.photo) && on.every((k) => PREF_OK[k](amenOf(s)))) : state.all;
   if (state.activeId && !state.stores.some((s) => s.id === state.activeId)) closePreview(false);
 }
-// 정밀 확인 범위: 상위 30곳 (호출량 제한 — 매장당 3회, 1일 캐시)
-const AMEN_SCOPE = 30;
+// 정밀 확인 범위: 검색 결과 전체(최대 60곳). 매출 순위 순으로 6곳씩 — 매장당 3회, 1일 캐시
+const AMEN_SCOPE = CONFIG.maxPins;
 const amenOf = (s) => s.amen || s.photo?.amenities || {};
 function prefsPending() {
   return state.prefs.size ? state.all.slice(0, AMEN_SCOPE).filter((s) => !s.amen && !s.amenDone).length : 0;
@@ -514,10 +514,11 @@ const PREFS = [
   { k: "park", label: "주차", icon: "parking" },
   { k: "cork", label: "콜키지", icon: "wine" },
 ];
+// 필터 판정 = 상세 화면 표기와 같은 함수 (amenityStates)
 const PREF_OK = {
-  room: (a) => a.room?.state === "yes",
-  park: (a) => ["valet", "free", "yes", "limited"].includes(a.parking?.state),
-  cork: (a) => ["free", "paid", "yes"].includes(a.corkage?.state),
+  room: (a) => amenityStates(a).room === "yes",
+  park: (a) => amenityStates(a).park === "yes",
+  cork: (a) => amenityStates(a).cork === "yes",
 };
 
 // 상세 화면 편의 정보: 있어요 / 없어요 / 미확인 (+ 금액이 있으면 작게)
@@ -1069,10 +1070,14 @@ function outsideRatio(cur, prev) {
   return area > 0 ? 1 - (w * h) / area : 0;
 }
 const OUTSIDE = 0.4; // 화면의 40% 이상이 검색 영역 밖이면 '이 지역에서 검색' 
+const MANY_VISIBLE = 5; // 화면에 결과가 이만큼 보이면 버튼을 띄우지 않는다
 map.on("moveend", () => {
   if (performance.now() < autoUntil || searching) return markSearched();
   if (!lastView || state.shared) return;
-  $("areaBtn").hidden = outsideRatio(visibleBounds(), lastView) < OUTSIDE;
+  const b = visibleBounds();
+  const visible = state.stores.filter((s) => s.lat <= b.n && s.lat >= b.s && s.lng >= b.w && s.lng <= b.e).length;
+  // 검색 영역에서 벗어났고, 지금 화면에 결과가 거의 없을 때만
+  $("areaBtn").hidden = outsideRatio(b, lastView) < OUTSIDE || visible >= MANY_VISIBLE;
 });
 function inArea(list, o) {
   state.radius = 0;
