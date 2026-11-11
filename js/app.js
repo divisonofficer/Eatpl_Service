@@ -61,9 +61,22 @@ const HOT = 3; // 상위 3곳은 주황 핀
 const kakaoRoute = (s) => `https://map.kakao.com/link/to/${encodeURIComponent(s.name)},${s.lat},${s.lng}`;
 
 const hi = (u) => (u ? String(u).replace("/130x130_85_c/", "/320x320_85_c/") : u);
+// 썸네일 로드 실패 → 업종 아이콘 타일로 대체 (error 는 버블링하지 않으므로 캡처 단계에서 받는다)
+document.addEventListener(
+  "error",
+  (e) => {
+    const im = e.target;
+    if (im?.tagName !== "IMG" || !im.dataset.ic) return;
+    const t = document.createElement("span");
+    t.className = "tile";
+    t.innerHTML = svg(im.dataset.ic, 22);
+    im.replaceWith(t);
+  },
+  true
+);
 function thumbHtml(s, size = 22, label = true) {
   const photo = hi(s.photo?.pin?.thumb || s.photo?.images?.[0]?.thumb);
-  if (photo) return `<img src="${esc(photo)}" alt="" referrerpolicy="no-referrer" />`;
+  if (photo) return `<img src="${esc(photo)}" alt="" data-ic="${catIcon(s.category)}" referrerpolicy="no-referrer" />`;
   if (s.photo === undefined && s.photoLoading) return `<span class="tile skel"></span>`;
   return `<span class="tile${s.group ? " g" : ""}">${svg(catIcon(s.category), size)}${label ? `<small>${esc(catLabel(s.category))}</small>` : ""}</span>`;
 }
@@ -375,6 +388,7 @@ let searching = false;
 async function run() {
   const my = ++seq;
   searching = true;
+  $("results").setAttribute("aria-busy", "true");
   $("areaBtn").hidden = true;
   if (state.shared) {
     state.shared = false;
@@ -408,6 +422,7 @@ async function run() {
     state.total = 0;
     toast(err.message || "불러오기 실패");
   }
+  $("results").removeAttribute("aria-busy");
   state.activeId = null;
   $("results").scrollTop = 0;
   renderMarkers();

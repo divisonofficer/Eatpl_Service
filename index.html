@@ -42,7 +42,7 @@
       <div class="handle" aria-hidden="true"></div>
       <div class="head-row">
         <div class="head-text">
-          <div class="head-title"><span id="resultCount">-</span> <span id="statusBadge" class="badge" hidden></span></div>
+          <div class="head-title"><span id="resultCount" role="status">-</span> <span id="statusBadge" class="badge" hidden></span></div>
         </div>
         <button id="candBtn" class="cand-btn" disabled hidden><span id="candIc"></span><span><b id="candCount">0</b>곳 알리기</span></button>
       </div>
@@ -101,7 +101,7 @@
     <button type="button" class="icon-btn" aria-label="닫기" onclick="this.parentElement.hidden=true"></button>
   </div>
 
-  <div id="toast" hidden></div>
+  <div id="toast" role="status" hidden></div>
 
   <script src="vendor/proj4.js"></script>
   <script src="vendor/leaflet/leaflet.js"></script>
