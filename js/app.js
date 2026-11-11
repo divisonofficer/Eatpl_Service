@@ -127,12 +127,10 @@ function renderMarkers() {
     })
       .on("click", (e) => {
         const t = e.originalEvent?.target;
-        if (t?.closest?.("[data-more]")) {
-          const pts = sd.members.map(({ s: v }) => [v.lat, v.lng]);
-          return auto(() => map.fitBounds(L.latLngBounds(pts), { ...fitPadding(), maxZoom: Math.min(z + 3, 18) }));
-        }
         const pop = t?.closest?.("[data-pop]");
         if (pop) return openDetail(s, pop);
+        // 겹친 핀(+n): 핀을 눌러도 배지를 눌러도 펼친다 (확대 또는 같은 자리 목록)
+        if (sd.members.length > 1) return expandGroup(sd);
         select(s.id, "map");
       })
       .addTo(layer);
@@ -146,11 +144,51 @@ const scheduleMarkers = () => {
   markerRaf = requestAnimationFrame(renderMarkers);
 };
 map.on("zoomend", scheduleMarkers);
+
+// ---------- 겹친 핀 펼치기 ----------
+// 확대하면 풀리는 거리면 묶음에 맞춰 확대(줌 19 에서는 묶지 않는다).
+// 줌 19 에서도 핀이 겹치는 거리(같은 건물 등)면 그 자리에 'OO곳' 목록을 띄우고 골라 선택한다.
+const GROUP_MAX_Z = 19;
+const grpLayer = L.layerGroup().addTo(map);
+function expandGroup(sd) {
+  const members = sd.members.map((m) => m.s);
+  const b = L.latLngBounds(members.map((v) => [v.lat, v.lng]));
+  const span = map.project(b.getNorthWest(), GROUP_MAX_Z).distanceTo(map.project(b.getSouthEast(), GROUP_MAX_Z));
+  if (span < PIN_R.big * 2 + 4) return showGroupList(members, sd.s);
+  grpLayer.clearLayers();
+  auto(() => map.fitBounds(b, { ...fitPadding(), maxZoom: GROUP_MAX_Z }));
+}
+const GROUP_ROWS = 6;
+function showGroupList(members, at) {
+  grpLayer.clearLayers();
+  if (state.preview) closePreview(false);
+  const rows = members
+    .slice(0, GROUP_ROWS)
+    .map(
+      (s) => `<button type="button" class="g-row" data-gid="${esc(s.id)}"><span class="g-th">${thumbHtml(s, 16, false)}</span><span class="g-t"><b>${esc(s.name)}</b><small>${tierHtml(s.rank)}${esc(catLabel(s.category))}</small></span>${svg("chevron", 14)}</button>`
+    )
+    .join("");
+  const more = members.length > GROUP_ROWS ? `<div class="g-more">외 ${members.length - GROUP_ROWS}곳은 아래 목록에서</div>` : "";
+  L.marker([at.lat, at.lng], {
+    icon: L.divIcon({ className: "", html: `<div class="grp-pop" role="dialog" aria-label="이 위치 ${members.length}곳"><div class="g-head">이 위치 ${members.length}곳</div>${rows}${more}</div>`, iconSize: null, iconAnchor: [0, 0] }),
+    zIndexOffset: 400000,
+  })
+    .on("click", (e) => {
+      const id = e.originalEvent?.target?.closest?.("[data-gid]")?.dataset.gid;
+      if (!id) return;
+      grpLayer.clearLayers();
+      select(id, "map");
+    })
+    .addTo(grpLayer);
+}
+map.on("zoomstart", () => grpLayer.clearLayers());
+Object.assign(window.__hp, { state, expandGroup }); // e2e 확인용 (같은 자리 묶음을 만들어 목록 확인)
 // 지도 빈 곳 클릭: 미리보기 닫기. 역·정류장·주요 장소를 누르면 'OO 근처에서 검색' 핀을 띄운다.
 const poiLayer = L.layerGroup().addTo(map);
 map.on("click", (e) => {
   const p = poiAt(baseLayer, e.latlng);
   poiLayer.clearLayers();
+  grpLayer.clearLayers();
   if (state.preview) closePreview();
   if (p) showPoi(p);
 });
@@ -441,6 +479,7 @@ async function run() {
     history.replaceState(null, "", location.pathname);
   }
   closePreview(false);
+  grpLayer.clearLayers();
   const mode = MODES[state.mode];
   if (!$("loc").value.trim()) $("loc").value = CONFIG.defaultLocation;
   const locations = state.origin?.queries || [state.origin?.query || $("loc").value.trim()];

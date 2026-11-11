@@ -244,6 +244,16 @@ const c1 = await ev(`(() => { const c = window.__hp.map.getCenter(); return [c.l
 check("emptyMoves", (await ev(`document.getElementById('resultCount').textContent`)).includes(" 0곳") && c1[1] > 131 && c1[0] > 37, { title: await ev(`document.getElementById('resultCount').textContent`), from: c0, to: c1 });
 await shot("13-empty-move");
 
+// 18) 겹친 핀: 같은 건물(확대해도 안 풀림)이면 'n곳' 목록 → 고르면 그 매장 선택
+await load(URL0); await sleep(1500);
+const grpWant = await ev(`(() => { const { state, map, expandGroup } = window.__hp; const [a, b] = state.stores; b.lat = a.lat + 0.00002; b.lng = a.lng + 0.00002;
+  map.setView([a.lat, a.lng], 18, { animate: false }); expandGroup({ s: a, members: [{ s: a }, { s: b }] }); return b.name; })()`);
+await sleep(600);
+const grpRows = await ev(`document.querySelectorAll('.grp-pop .g-row').length`);
+await ev(`document.querySelectorAll('.grp-pop .g-row')[1].click()`); await sleep(1200);
+const grpActive = await ev(`document.querySelector('.mk.is-active .mk-pop b')?.textContent`);
+check("groupList", grpRows === 2 && grpActive === grpWant && !(await ev(`!!document.querySelector('.grp-pop')`)), { grpRows, grpWant, grpActive });
+
 check("noErrors", errors.length === 0, errors.slice(0, 3));
 const failed = Object.entries(R).filter(([, v]) => !v.ok);
 console.log(JSON.stringify(R, null, 2));

@@ -115,6 +115,22 @@ button:disabled { cursor: default; opacity: 0.4; }
 }
 .origin-mk b { background: #ffd43b; color: var(--ink); border-radius: var(--pill); padding: 2px 7px; font-size: 11px; }
 .origin-mk b.pl { background: #e8f0fe; color: var(--blue); }
+/* 겹친 핀 목록 (같은 자리 여러 곳) */
+.grp-pop {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, calc(-100% - 44px)); width: 240px; padding: 6px; border-radius: 16px;
+  background: #fff; box-shadow: var(--shadow); animation: pop-up 0.2s ease-out;
+}
+.grp-pop::after { content: ""; position: absolute; left: 50%; bottom: -8px; margin-left: -8px; border: 8px solid transparent; border-bottom: 0; border-top-color: #fff; }
+.g-head { padding: 4px 8px 6px; font-size: 12px; font-weight: 800; color: var(--sub); }
+.g-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 4px 6px; border: 0; border-radius: 10px; background: none; text-align: left; color: var(--muted); }
+.g-row:hover, .g-row:focus-visible { background: var(--bg); }
+.g-th { width: 36px; height: 36px; border-radius: 9px; overflow: hidden; display: block; }
+.g-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.g-t { display: grid; gap: 1px; min-width: 0; }
+.g-t b { color: var(--ink); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.g-t small { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--sub); }
+.g-t .tier { height: 17px; font-size: 10px; padding: 0 5px; }
+.g-more { padding: 4px 8px 2px; font-size: 11px; color: var(--muted); }
 /* 지도 위 역·정류장을 눌렀을 때: 'OO 근처에서 검색' */
 .poi-pop {
   position: absolute; left: 0; top: 0; transform: translate(-50%, calc(-100% - 12px)); display: inline-flex; align-items: center; gap: 5px;
