@@ -378,8 +378,11 @@ dialog.eatpl[open] { display: flex; }
   body.previewing .fabs { bottom: 110px; }
   .fab { width: 42px; height: 42px; }
   .preview { left: calc(var(--panel-w) + 32px); right: 16px; bottom: 20px; }
-  .pv-track { padding: 4px 4px 6px; }
-  .pv-card { width: 400px; }
+  /* PC: 캐러셀 대신 선택된 카드 하나만 (목록·핀으로 고른다). 팝오버는 카드와 겹쳐 숨김 */
+  .pv-track { padding: 4px 4px 6px; overflow: visible; }
+  .pv-card { width: 400px; display: none; }
+  .pv-card.cur { display: grid; }
+  .mk-pop { display: none; }
   dialog.page { width: 480px; height: min(900px, 94dvh); margin: auto; border-radius: var(--r); }
   .dt-bar { position: sticky; }
   dialog.page { padding-bottom: 0; }

@@ -643,6 +643,7 @@ function select(id, from) {
   const s = storeById(id);
   if (!s) return;
   document.querySelector(`.row[data-id="${CSS.escape(id)}"]`)?.classList.add("active");
+  document.querySelectorAll(".pv-card").forEach((c) => c.classList.toggle("cur", c.dataset.id === id)); // PC: 선택된 카드만 보임
   loadPhotos(s);
   if (from !== "carousel") {
     if (!state.preview) openPreview();
@@ -655,7 +656,7 @@ function pvCard(s) {
   const dist = s.dist != null ? `<span>${state.origin?.kind === "store" ? fmtWalk(s.dist) : fmtDist(s.dist)}</span>` : "";
   const on = inCand(s.id);
   return `
-  <article class="pv-card" data-id="${esc(s.id)}">
+  <article class="pv-card${s.id === state.activeId ? " cur" : ""}" data-id="${esc(s.id)}">
     <div class="pv-main" data-detail="${esc(s.id)}">
       <div class="pv-thumb">${thumbHtml(s, 26)}</div>
       <div class="pv-info">
