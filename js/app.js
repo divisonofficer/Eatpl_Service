@@ -1,5 +1,5 @@
 import { CONFIG } from "./config.js";
-import { search, status, kakaoPlace, kakaoSearchUrl, storePhotos, storeAmenities, storeFacilities, verifyRoomOnline, regionOf, geocode } from "./api.js";
+import { search, status, kakaoPlace, kakaoSearchUrl, storePhotos, storeAmenities, storeFacilities, verifyRoomOnline, storeMenu, regionOf, geocode } from "./api.js";
 import { MODES, ALL_CATEGORIES, applyMode } from "./modes.js";
 import { hours, holiday, rankTier, tierHtml, area, catLabel, catIcon, buildMessage } from "./format.js";
 import { createSheet } from "./sheet.js";
@@ -8,7 +8,7 @@ import { attachSuggest, resolveQuery } from "./suggest.js";
 import { svg } from "./icons.js";
 import { recommend, topReasons, DAYS, todayKST } from "./recommend.js";
 import { amenityStates, AMENITY_TEXT, mergeParking } from "./amenities-fmt.js";
-import { attachBaseMap } from "./basemap.js";
+import { attachBaseMap, poiAt } from "./basemap.js";
 import { telHref, naverMapSearchUrl, safeCatchtable, reserveHint } from "./reserve-fmt.js";
 
 const $ = (id) => document.getElementById(id);
@@ -50,7 +50,7 @@ const map = L.map("map", { zoomControl: false }).setView([37.57, 126.99], 14);
 map.attributionControl.setPrefix(false);
 window.__hp = { map }; // e2e 확인용 // "Leaflet" 접두어 제거 (OSM·잇플 출처 표기는 유지)
 L.control.zoom({ position: "bottomright" }).addTo(map);
-attachBaseMap(map, { attribution: "eat.pl 잇플 · BC카드 결제 데이터 기반" }); // 카카오풍 벡터 지도, 안 되면 OSM
+const baseLayer = attachBaseMap(map, { attribution: "eat.pl 잇플 · BC카드 결제 데이터 기반" }); // 카카오풍 벡터 지도, 안 되면 OSM
 const layer = L.layerGroup().addTo(map);
 const meLayer = L.layerGroup().addTo(map);
 const markers = new Map(); // 개별 매장 마커 (클러스터 제외)
@@ -146,7 +146,30 @@ const scheduleMarkers = () => {
   markerRaf = requestAnimationFrame(renderMarkers);
 };
 map.on("zoomend", scheduleMarkers);
-map.on("click", () => state.preview && closePreview());
+// 지도 빈 곳 클릭: 미리보기 닫기. 역·정류장·주요 장소를 누르면 'OO 근처에서 검색' 핀을 띄운다.
+const poiLayer = L.layerGroup().addTo(map);
+map.on("click", (e) => {
+  const p = poiAt(baseLayer, e.latlng);
+  poiLayer.clearLayers();
+  if (state.preview) closePreview();
+  if (p) showPoi(p);
+});
+function showPoi(p) {
+  const ic = svg("search", 14);
+  L.marker([p.lat, p.lng], {
+    icon: L.divIcon({ className: "", html: `<button type="button" class="poi-pop">${ic}<b>${esc(p.name)}</b><span>근처에서 검색</span>${svg("chevron", 14)}</button>`, iconSize: null, iconAnchor: [0, 0] }),
+    zIndexOffset: 300000,
+    title: `${p.name} 근처에서 검색`,
+  })
+    .on("click", () => searchNearPoi(p))
+    .addTo(poiLayer);
+}
+// 데스크톱: 누를 수 있는 장소 위에서는 손 모양 커서
+let hoverRaf = 0;
+map.on("mousemove", (e) => {
+  cancelAnimationFrame(hoverRaf);
+  hoverRaf = requestAnimationFrame(() => (map.getContainer().style.cursor = poiAt(baseLayer, e.latlng) ? "pointer" : ""));
+});
 
 // 지도에서 UI(검색 바·시트·미리보기·패널)에 가려지는 영역
 function cover() {
@@ -610,6 +633,28 @@ function roomSourceNote(s) {
   if (s.roomChk === "done" && r?.state === "yes") return "AI 확인 못 함 · 글 기준 추정";
   return "";
 }
+// 메뉴판 사진: 블로그 사진이라 가격이 바뀌었을 수 있다 — 글 날짜와 원문 링크를 같이 보여준다.
+async function loadMenu(s) {
+  if (!s || s.menu !== undefined || s.menuLoading) return;
+  s.menuLoading = true;
+  const m = await storeMenu(s);
+  s.menuLoading = false;
+  s.menu = m?.images || [];
+  if ($("detail").open && detailStore?.id === s.id) renderDetail(s, true);
+}
+function menuHtml(s) {
+  if (s.menuLoading) return `<div class="dt-menu"><div class="dt-menu-head"><b>메뉴판 사진</b><span>찾는 중…</span></div><div class="menu-track"><span class="menu-skel"></span><span class="menu-skel"></span></div></div>`;
+  const imgs = s.menu || [];
+  if (!imgs.length) return "";
+  const ym = (d) => (d ? d.slice(0, 7).replace("-", ".") : "");
+  return `<div class="dt-menu"><div class="dt-menu-head"><b>메뉴판 사진</b><span>블로그 사진 · 가격이 바뀌었을 수 있어요</span></div><div class="menu-track">${imgs
+    .map(
+      (im) =>
+        `<a href="${esc(im.source)}" target="_blank" rel="noopener nofollow"><img src="${esc(im.thumb)}" alt="메뉴판 사진" referrerpolicy="no-referrer" onerror="this.parentElement.remove()" />${im.date ? `<small>${esc(ym(im.date))}</small>` : ""}</a>`
+    )
+    .join("")}</div></div>`;
+}
+
 // 예약 확인: 예약 '가능 여부'는 공식 데이터가 없어 단정하지 않는다. 예약 수단으로 바로 보내고, 블로그 언급은 참고로만.
 function reserveRow(s) {
   const r = amenOf(s).reserve || s.amen?.reserve || null;
@@ -822,6 +867,7 @@ function openDetail(s, srcEl) {
   loadPhotos(s);
   s.wantVerify = true;
   loadAmenities(s);
+  loadMenu(s);
   maybeVerifyRoom(s);
   resolveKakao(s);
 }
@@ -855,6 +901,7 @@ function renderDetail(s, keepScroll = false) {
         <li>${svg("pin", 20)}<div><b>${esc(s.address)}</b>
           <span class="dt-links"><a href="${esc(kakaoRoute(s))}" target="_blank" rel="noopener">길찾기</a><a data-kakao="${esc(s.id)}" href="${esc(kakaoSearchUrl(s))}" target="_blank" rel="noopener">카카오맵 사진·리뷰</a></span></div></li>
       </ul>
+      ${menuHtml(s)}
       <div id="dtMap" class="dt-map"></div>
       ${state.mode === "dinner" && !state.shared ? `<button type="button" class="btn btn-line btn-block" data-next="${esc(s.id)}">이 근처 2차 찾기</button>` : ""}
     </div>
@@ -868,7 +915,9 @@ function renderDetail(s, keepScroll = false) {
   }
 
   detailMap?.remove();
-  detailMap = L.map("dtMap", { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, boxZoom: false, keyboard: false }).setView([s.lat, s.lng], 16);
+  // 고정 지도: 확대 애니메이션 끔 — 상세를 다시 그릴 때마다 지도를 지우고 만드는데, 벡터 플러그인이 애니메이션 종료 콜백에서
+  // 이미 지워진 지도를 참조해 오류가 났다 (leaflet-maplibre-gl _transitionEnd)
+  detailMap = L.map("dtMap", { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, boxZoom: false, keyboard: false, zoomAnimation: false, fadeAnimation: false, markerZoomAnimation: false }).setView([s.lat, s.lng], 16);
   detailMap.attributionControl.setPrefix(false);
   attachBaseMap(detailMap);
   L.marker([s.lat, s.lng], { icon: L.divIcon({ className: "", html: `<div class="mk"><div class="mk-pin hot"><span class="mk-in">${svg(catIcon(s.category), 18)}</span></div></div>`, iconSize: null, iconAnchor: [0, 0] }) }).addTo(detailMap);
@@ -1302,6 +1351,22 @@ function findSecondStop(s) {
 }
 
 // ---------- 검색어 추천 ----------
+// 지도 위 장소(역·정류장) 기준 검색 — 검색어 추천에서 역을 고른 것과 같은 동작. 잡플 검색용 지역(구)은 좌표로 조회
+async function searchNearPoi(p) {
+  poiLayer.clearLayers();
+  let region;
+  try {
+    region = await regionOf(p.lat, p.lng);
+  } catch {
+    return toast("지역 확인에 실패했어요");
+  }
+  clearOrigin();
+  state.origin = { kind: "place", name: p.name, lat: p.lat, lng: p.lng, radii: PLACE_RADII, query: region.query };
+  drawMe(state.origin);
+  $("loc").value = p.name;
+  run();
+}
+
 function pickPlace(it) {
   clearOrigin();
   $("loc").value = it.label;

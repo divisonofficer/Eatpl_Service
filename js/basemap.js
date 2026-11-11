@@ -15,6 +15,28 @@ function hasWebGL() {
   }
 }
 
+// 눌러서 '근처에서 검색' 할 수 있는 지도 위 장소: 역·정류장(poi_transit), 주요 장소(poi_r1)
+const POI_LAYERS = ["poi_transit", "poi_r1"];
+// Leaflet 좌표 → 벡터 지도에 그려진 POI (없으면 null). 래스터 폴백이면 항상 null
+export function poiAt(layer, latlng, px = 12) {
+  const gl = layer?.getMaplibreMap?.();
+  if (!gl) return null;
+  let f;
+  try {
+    // isStyleLoaded() 는 타일을 받는 중에도 false 라 쓰지 않는다 — 아직 없는 레이어만 건너뛴다
+    const layers = POI_LAYERS.filter((id) => gl.getLayer(id));
+    if (!layers.length) return null;
+    const pt = gl.project([latlng.lng, latlng.lat]);
+    f = gl.queryRenderedFeatures([[pt.x - px, pt.y - px], [pt.x + px, pt.y + px]], { layers })[0];
+  } catch {
+    return null;
+  }
+  const name = f && (f.properties["name:ko"] || f.properties.name);
+  if (!name || f.geometry?.type !== "Point") return null;
+  const [lng, lat] = f.geometry.coordinates;
+  return { name, lat, lng, transit: f.layer.id === "poi_transit", cls: f.properties.class || "" };
+}
+
 const raster = (attribution) => L.tileLayer(OSM, { maxZoom: 19, attribution: `${attribution}© OpenStreetMap` });
 
 // attribution: 앞에 붙일 출처(예: 잇플 표기). 지도 데이터 출처는 여기서 붙인다.

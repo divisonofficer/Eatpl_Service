@@ -231,6 +231,21 @@ export function verifyRoomOnline(s) {
   return p;
 }
 
+// ---------- 메뉴판 사진 (/api/menu — 상세를 열 때만, 7일 캐시) ----------
+const menuCache = new Map();
+export function storeMenu(s) {
+  if (photosDisabled || status.source === "mock" || status.fellBack) return Promise.resolve(null);
+  if (menuCache.has(s.id)) return menuCache.get(s.id);
+  const q = new URLSearchParams({ name: s.name, addr: s.address, tel: s.tel || "", lat: s.lat.toFixed(6), lng: s.lng.toFixed(6) });
+  const p = slot()
+    .then(() => fetch(`/api/menu?${q}`))
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null)
+    .finally(release);
+  menuCache.set(s.id, p);
+  return p;
+}
+
 // ---------- 검색어 → 좌표 (결과가 없을 때 지도 이동용) ----------
 const geoCache = new Map();
 export function geocode(q) {
