@@ -8,6 +8,8 @@ import { attachSuggest, resolveQuery } from "./suggest.js";
 import { svg } from "./icons.js";
 import { recommend, topReasons, DAYS, todayKST } from "./recommend.js";
 import { amenityStates, AMENITY_TEXT, mergeParking } from "./amenities-fmt.js";
+import { attachBaseMap } from "./basemap.js";
+import { telHref, naverMapSearchUrl, safeCatchtable, reserveHint } from "./reserve-fmt.js";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -48,10 +50,7 @@ const map = L.map("map", { zoomControl: false }).setView([37.57, 126.99], 14);
 map.attributionControl.setPrefix(false);
 window.__hp = { map }; // e2e 확인용 // "Leaflet" 접두어 제거 (OSM·잇플 출처 표기는 유지)
 L.control.zoom({ position: "bottomright" }).addTo(map);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: "eat.pl 잇플 · BC카드 결제 데이터 기반 | © OpenStreetMap",
-}).addTo(map);
+attachBaseMap(map, { attribution: "eat.pl 잇플 · BC카드 결제 데이터 기반" }); // 카카오풍 벡터 지도, 안 되면 OSM
 const layer = L.layerGroup().addTo(map);
 const meLayer = L.layerGroup().addTo(map);
 const markers = new Map(); // 개별 매장 마커 (클러스터 제외)
@@ -611,6 +610,21 @@ function roomSourceNote(s) {
   if (s.roomChk === "done" && r?.state === "yes") return "AI 확인 못 함 · 글 기준 추정";
   return "";
 }
+// 예약 확인: 예약 '가능 여부'는 공식 데이터가 없어 단정하지 않는다. 예약 수단으로 바로 보내고, 블로그 언급은 참고로만.
+function reserveRow(s) {
+  const r = amenOf(s).reserve || s.amen?.reserve || null;
+  const tel = telHref(s.tel) || telHref(s.photo?.place?.phone);
+  const kakao = s.photo?.place?.url || kakaoSearchUrl(s);
+  const ct = safeCatchtable(r?.catchtable);
+  const links = [
+    tel ? `<a class="rsv" href="${esc(tel)}">${svg("phone", 15)}전화</a>` : "",
+    ct ? `<a class="rsv hot" href="${esc(ct)}" target="_blank" rel="noopener">캐치테이블</a>` : "",
+    `<a class="rsv" href="${esc(kakao)}" target="_blank" rel="noopener">카카오맵</a>`,
+    `<a class="rsv" href="${esc(naverMapSearchUrl(s.name, area(s)))}" target="_blank" rel="noopener">네이버 지도</a>`,
+  ].join("");
+  const hint = reserveHint(r);
+  return `<li class="rsv-row">${svg("calendar", 20)}<div><b>예약 확인하기</b>${hint ? `<span>${esc(hint)}</span>` : ""}<span class="rsv-links">${links}</span></div></li>`;
+}
 function amenityRows(s) {
   if (!s.amen && !s.amenDone) return `<li class="am-loading">${svg("door", 20)}<div><b>룸·주차·콜키지 확인 중…</b></div></li>`;
   const st = amenityStates(amenOf(s));
@@ -835,6 +849,7 @@ function renderDetail(s, keepScroll = false) {
       <ul class="dt-rows">
         <li>${svg("clock", 20)}<div><b>${esc(hours(s))}</b><span>${esc(holiday(s))} · 최근 1개월 결제 기준</span></div></li>
         ${amenityRows(s)}
+        ${reserveRow(s)}
         ${s.busyTime ? `<li>${svg("fire", 20)}<div><b>${esc(s.busyDay)}요일 ${esc(s.busyTime)} 붐빔</b></div></li>` : ""}
         ${s.customers.length ? `<li>${svg("users", 20)}<div><b>주 고객</b><span>${esc(s.customers.join(", "))}</span></div></li>` : ""}
         <li>${svg("pin", 20)}<div><b>${esc(s.address)}</b>
@@ -855,7 +870,7 @@ function renderDetail(s, keepScroll = false) {
   detailMap?.remove();
   detailMap = L.map("dtMap", { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, boxZoom: false, keyboard: false }).setView([s.lat, s.lng], 16);
   detailMap.attributionControl.setPrefix(false);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(detailMap);
+  attachBaseMap(detailMap);
   L.marker([s.lat, s.lng], { icon: L.divIcon({ className: "", html: `<div class="mk"><div class="mk-pin hot"><span class="mk-in">${svg(catIcon(s.category), 18)}</span></div></div>`, iconSize: null, iconAnchor: [0, 0] }) }).addTo(detailMap);
 }
 let closing = false;

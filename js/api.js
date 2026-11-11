@@ -191,7 +191,7 @@ export function storeAmenities(s) {
   const p = slot()
     .then(() => fetch(`/api/amenities?${q}`))
     .then((r) => (r.ok ? r.json() : null))
-    .then((j) => j?.amenities || null)
+    .then((j) => (j?.amenities ? { ...j.amenities, reserve: j.reserve || null } : null)) // reserve: 예약 힌트(블로그)
     .catch(() => null)
     .finally(release);
   amenCache.set(s.id, p);

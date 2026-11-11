@@ -24,6 +24,7 @@ const P = {
   door: '<path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17M3 21h18"/><circle cx="14.5" cy="12" r="1" fill="currentColor"/>',
   parking: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M9.5 16.5v-9h3.5a3 3 0 0 1 0 6H9.5"/>',
   wine: '<path d="M8 21h8M12 15v6M7.5 3h9l-.7 6.2a3.8 3.8 0 0 1-7.6 0L7.5 3Z"/><path d="M8 7.5h8"/>',
+  phone: '<path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/>',
   external: '<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   // 업종
   utensils: '<path d="M4 2v7a3 3 0 0 0 3 3h0a3 3 0 0 0 3-3V2M7 2v20"/><path d="M20 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2h3Zm0 0v7"/>',

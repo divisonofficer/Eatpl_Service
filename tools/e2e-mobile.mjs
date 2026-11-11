@@ -74,7 +74,7 @@ check("eatplClose", (await ev(`document.getElementById('epFrame').src`)) === "ab
 
 // 5) 상세 → 후보 담기
 await ev(`document.querySelector('.pv-card [data-detail]').click()`); await sleep(1500); await shot("04-detail");
-const dt = await ev(`({ open: document.getElementById('detail').open, map: !!document.querySelector('#dtMap .leaflet-tile-pane img') })`);
+const dt = await ev(`({ open: document.getElementById('detail').open, map: !!document.querySelector('#dtMap canvas, #dtMap .leaflet-tile-pane img') })`); // 벡터(canvas) 또는 래스터 폴백(img)
 check("detail", dt.open && dt.map, dt);
 await ev(`document.querySelector('#detail .dt-bar [data-add]').click()`); await sleep(200);
 await ev(`document.getElementById('detail').close()`); await sleep(200);
