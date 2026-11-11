@@ -18,7 +18,7 @@
       "includeFiles": "{models/**,node_modules/onnxruntime-web/dist/ort.node.min.mjs,node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs,node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm}"
     },
     "api/amenities.mjs": {
-      "maxDuration": 20
+      "maxDuration": 60
     },
     "api/facilities.mjs": {
       "maxDuration": 20

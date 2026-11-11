@@ -4,6 +4,7 @@
 // 키워드 검색(회식·심야 등)은 k-skill-proxy 미지원 → live 에서는 생략, 필드 기반 필터로 대체.
 import { CONFIG } from "./config.js";
 import { TM128 } from "./geo-def.js";
+import { cleanName } from "./legal-name.js";
 
 const toWgs = (x, y) => {
   const [lng, lat] = window.proj4(TM128, "WGS84", [Number(x), Number(y)]);
@@ -17,7 +18,7 @@ function normalize(r, kwSet) {
   const c = r.vistCstmrRnkList || {};
   return {
     id: keyOf(r),
-    name: r.merNm,
+    name: cleanName(r.merNm), // 사업자(법인)명 표기는 정규식으로 제거 — 화면에는 상호만
     category: r.merTpbuzNm || "-",
     address: r.merAddr || "",
     lat,
@@ -213,6 +214,20 @@ export function storeFacilities(s) {
     .catch(() => null)
     .finally(release);
   facCache.set(s.id, p);
+  return p;
+}
+
+// ---------- 룸 있음 검증 (K-EXAONE, 서버가 호출) — 상세를 열 때만 ----------
+// { room, verified } — verified=false 면 규칙 추정 그대로(한도·실패 폴백). 모델 호출이 느릴 수 있어(수십 초) 사진 슬롯을 쓰지 않는다.
+const roomCache = new Map();
+export function verifyRoomOnline(s) {
+  if (photosDisabled || status.source === "mock" || status.fellBack) return Promise.resolve(null);
+  if (roomCache.has(s.id)) return roomCache.get(s.id);
+  const q = new URLSearchParams({ name: s.name, addr: s.address, tel: s.tel || "", lat: s.lat.toFixed(6), lng: s.lng.toFixed(6), verify: "1" });
+  const p = fetch(`/api/amenities?${q}`, { signal: AbortSignal.timeout(58000) })
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+  roomCache.set(s.id, p);
   return p;
 }
 

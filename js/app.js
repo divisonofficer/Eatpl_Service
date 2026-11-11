@@ -1,5 +1,5 @@
 import { CONFIG } from "./config.js";
-import { search, status, kakaoPlace, kakaoSearchUrl, storePhotos, storeAmenities, storeFacilities, regionOf, geocode } from "./api.js";
+import { search, status, kakaoPlace, kakaoSearchUrl, storePhotos, storeAmenities, storeFacilities, verifyRoomOnline, regionOf, geocode } from "./api.js";
 import { MODES, ALL_CATEGORIES, applyMode } from "./modes.js";
 import { hours, holiday, rankTier, tierHtml, area, catLabel, catIcon, buildMessage } from "./format.js";
 import { createSheet } from "./sheet.js";
@@ -339,6 +339,18 @@ async function loadAmenities(s) {
   s.amenDone = true;
   if (a) s.amen = a;
   refreshStore(s);
+  maybeVerifyRoom(s);
+}
+// 룸: 규칙 추정이 '있음'일 때, 상세를 열었다면 AI 가 글을 다시 읽는다. 확인하는 동안은 '있어요'를 보여주지 않는다.
+// 목록·필터는 상세를 열기 전까지 규칙 추정 그대로 (한도가 낮아 매장 전체에는 못 돌린다).
+async function maybeVerifyRoom(s) {
+  if (!s.wantVerify || !s.amen || s.roomChk || s.amen.room?.state !== "yes") return;
+  s.roomChk = "loading";
+  refreshStore(s);
+  const r = await verifyRoomOnline(s);
+  s.roomChk = "done";
+  if (r?.verified) s.amen = { ...s.amen, room: r.room }; // room 이 null 이면 미확인
+  refreshStore(s);
 }
 function resort() {
   if (state.prefs.size) state.all.slice(0, AMEN_SCOPE).forEach(loadAmenities);
@@ -592,12 +604,23 @@ const PREF_OK = {
 };
 
 // 상세 화면 편의 정보: 있어요 / 없어요 / 미확인 (+ 금액이 있으면 작게)
+// 룸 근거 표기: AI 가 글을 다시 읽어 확인했는지 / 확인을 시도했지만 못 했는지(규칙 추정 그대로)
+function roomSourceNote(s) {
+  const r = amenOf(s).room;
+  if (r?.verified) return "글 내용 AI 확인";
+  if (s.roomChk === "done" && r?.state === "yes") return "AI 확인 못 함 · 글 기준 추정";
+  return "";
+}
 function amenityRows(s) {
   if (!s.amen && !s.amenDone) return `<li class="am-loading">${svg("door", 20)}<div><b>룸·주차·콜키지 확인 중…</b></div></li>`;
   const st = amenityStates(amenOf(s));
   const row = (k, note) =>
     `<li class="am-row ${st[k]}">${svg(AM_ICON[k][0], 20)}<div><b>${AMENITY_TEXT[k][st[k]]}</b>${note ? `<span>${esc(note)}</span>` : ""}</div></li>`;
-  return row("room", st.roomNote) + row("park", st.parkNote) + row("cork", st.corkNote);
+  const roomRow =
+    s.roomChk === "loading"
+      ? `<li class="am-loading">${svg("door", 20)}<div><b>룸 정보 확인 중…</b><span>글 내용을 다시 읽고 있어요</span></div></li>`
+      : row("room", [st.roomNote, roomSourceNote(s)].filter(Boolean).join(" · "));
+  return roomRow + row("park", st.parkNote) + row("cork", st.corkNote);
 }
 function addBtn(s, cls) {
   const on = inCand(s.id);
@@ -783,7 +806,9 @@ function openDetail(s, srcEl) {
   // 열린 뒤 크기 확정 → 미니 지도 재계산
   requestAnimationFrame(() => detailMap?.invalidateSize().setView([s.lat, s.lng], 16));
   loadPhotos(s);
+  s.wantVerify = true;
   loadAmenities(s);
+  maybeVerifyRoom(s);
   resolveKakao(s);
 }
 function renderDetail(s, keepScroll = false) {
