@@ -1,5 +1,5 @@
 import { CONFIG } from "./config.js";
-import { search, status, kakaoPlace, kakaoSearchUrl, storePhotos, storeAmenities, regionOf, geocode } from "./api.js";
+import { search, status, kakaoPlace, kakaoSearchUrl, storePhotos, storeAmenities, storeFacilities, regionOf, geocode } from "./api.js";
 import { MODES, ALL_CATEGORIES, applyMode } from "./modes.js";
 import { hours, holiday, rankTier, tierHtml, area, catLabel, catIcon, buildMessage } from "./format.js";
 import { createSheet } from "./sheet.js";
@@ -7,7 +7,7 @@ import { shareLink, readShare, isKakaoInApp, kakaoExternalUrl } from "./share.js
 import { attachSuggest, resolveQuery } from "./suggest.js";
 import { svg } from "./icons.js";
 import { recommend, topReasons, DAYS, todayKST } from "./recommend.js";
-import { amenityStates, AMENITY_TEXT } from "./amenities-fmt.js";
+import { amenityStates, AMENITY_TEXT, mergeParking } from "./amenities-fmt.js";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -315,14 +315,26 @@ function applyPrefs() {
 }
 // 정밀 확인 범위: 검색 결과 전체(최대 60곳). 매출 순위 순으로 6곳씩 — 매장당 3회, 1일 캐시
 const AMEN_SCOPE = CONFIG.maxPins;
-const amenOf = (s) => s.amen || s.photo?.amenities || {};
+// 편의 정보 = 블로그 추정 + 잇플 상세의 공식 주차 여부(s.fac, 우선)
+const amenOf = (s) => {
+  const a = s.amen || s.photo?.amenities || {};
+  return s.fac?.parking ? { ...a, parking: mergeParking(a.parking, s.fac.parking) } : a;
+};
+async function loadFacilities(s) {
+  if (!s || s.fac !== undefined || s.facLoading) return;
+  s.facLoading = true;
+  const f = await storeFacilities(s);
+  s.facLoading = false;
+  s.fac = f || null;
+  refreshStore(s);
+}
 function prefsPending() {
   return state.prefs.size ? state.all.slice(0, AMEN_SCOPE).filter((s) => !s.amen && !s.amenDone).length : 0;
 }
 async function loadAmenities(s) {
   if (!s || s.amen || s.amenLoading) return;
   s.amenLoading = true;
-  const a = await storeAmenities(s);
+  const [a] = await Promise.all([storeAmenities(s), loadFacilities(s)]);
   s.amenLoading = false;
   s.amenDone = true;
   if (a) s.amen = a;
@@ -667,14 +679,13 @@ function pvCard(s) {
       </div>
       <span class="pv-go">${svg("chevron", 18)}</span>
     </div>
-    <div class="pv-actions">
-      <button type="button" data-eatpl="${esc(s.id)}">${svg("external", 20)}<span>잇플</span></button>
-      <a href="${esc(kakaoRoute(s))}" target="_blank" rel="noopener">${svg("route", 20)}<span>길찾기</span></a>
-      <button type="button" data-add="${esc(s.id)}" class="${on ? "on" : ""}" ${!on && state.candidates.length >= CONFIG.maxCandidates ? "disabled" : ""}>${svg(on ? "check" : "plus", 20)}<span>${on ? "담김" : "담기"}</span></button>
-      <button type="button" data-share-one="${esc(s.id)}">${svg("share", 20)}<span>공유</span></button>
-    </div>
-    ${state.mode === "dinner" && !state.shared ? `<button type="button" class="pv-next" data-next="${esc(s.id)}">이 근처 2차 찾기 ${svg("chevron", 14)}</button>` : ""}
     <button type="button" class="btn btn-primary btn-block" data-eatpl="${esc(s.id)}">잇플에서 자세히 보기 ${svg("chevron", 18)}</button>
+    <div class="pv-actions">
+      <a href="${esc(kakaoRoute(s))}" target="_blank" rel="noopener">${svg("route", 16)}<span>길찾기</span></a>
+      <button type="button" data-add="${esc(s.id)}" class="${on ? "on" : ""}" ${!on && state.candidates.length >= CONFIG.maxCandidates ? "disabled" : ""}>${svg(on ? "check" : "plus", 16)}<span>${on ? "담김" : "담기"}</span></button>
+      <button type="button" data-share-one="${esc(s.id)}">${svg("share", 16)}<span>공유</span></button>
+      ${state.mode === "dinner" && !state.shared ? `<button type="button" data-next="${esc(s.id)}">${svg("walk", 16)}<span>근처 2차</span></button>` : ""}
+    </div>
   </article>`;
 }
 
@@ -1022,6 +1033,7 @@ async function copyText(text) {
 
 // ---------- 사진 ----------
 async function loadPhotos(s) {
+  if (s) loadFacilities(s); // 공식 주차 여부 — 사진이 보이는 매장(목록 상위·선택·상세)만 조회
   if (!s || s.photo !== undefined) return;
   s.photo = undefined;
   const res = await storePhotos(s);

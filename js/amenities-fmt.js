@@ -33,6 +33,16 @@ export function parkLabel(p) {
   }[p.state];
 }
 
+// 잇플 상세의 공식 주차 여부(yes|no|null)와 블로그 추정을 합친다.
+//  - 공식 '가능': 블로그가 이미 주차 가능 계열(발렛·무료·유료·협소…)이면 그 상세를 쓰고, 아니면(없음·인근 주차장·언급 없음) 공식 값으로 '가능'
+//  - 공식 '불가': 블로그가 발렛이면 발렛(전용 주차장 없이도 가능)을 쓰고, 아니면 '불가'
+//  - 공식 값이 없으면 블로그 추정 그대로
+export function mergeParking(blog, official) {
+  if (official === "yes") return blog && PARK_OK.includes(blog.state) ? blog : { state: "yes", official: true };
+  if (official === "no") return blog?.state === "valet" ? blog : { state: "no", official: true };
+  return blog;
+}
+
 // ---------- 단순 표기 (있음 / 없음 / 미확인) ----------
 // 상세 화면·필터·추천이 모두 이 함수 하나로 판정한다 (어긋남 방지)
 export const PARK_OK = ["valet", "free", "paid", "yes", "limited"];

@@ -232,10 +232,11 @@ body.previewing #sheet { transform: translateY(110%); }
 .pv-sub > span:not(.rk-pill):not(:first-of-type)::before { content: "· "; color: var(--muted); }
 .pv-meta { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); margin-top: 4px; }
 .pv-go { color: var(--muted); }
-.pv-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+/* 보조 버튼: 큰 '잇플에서 자세히 보기' 아래 작은 한 줄 (길찾기·담기·공유·근처 2차) */
+.pv-actions { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
 .pv-actions > * {
-  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 0 8px; border-radius: 14px; border: 0;
-  background: var(--bg); color: var(--ink); font-size: 12px; font-weight: 600; text-decoration: none;
+  display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; height: var(--h-sm); padding: 0 4px; border-radius: 10px; border: 0;
+  background: var(--bg); color: var(--ink); font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap; min-width: 0;
 }
 .pv-actions > * .ic { color: var(--c); }
 .pv-actions > .on { background: var(--c-soft); color: var(--c); }
@@ -648,3 +649,9 @@ body.previewing .area-btn { top: auto; bottom: calc(var(--pv-h) + 24px); }
 .icon-btn { position: relative; }
 .icon-btn::before { content: ""; position: absolute; inset: -4px; } /* 36px 버튼의 눌림 영역을 44px로 */
 .tile .ic { flex: none; }
+
+/* 좁은 화면: 보조 버튼 4개가 한 줄에 들어가도록 아이콘 생략 */
+@media (max-width: 380px) {
+  .pv-actions > * { padding: 0 2px; }
+  .pv-actions > * .ic { display: none; }
+}

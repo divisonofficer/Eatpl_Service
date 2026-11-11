@@ -19,6 +19,9 @@
     },
     "api/amenities.mjs": {
       "maxDuration": 20
+    },
+    "api/facilities.mjs": {
+      "maxDuration": 20
     }
   },
   "headers": [

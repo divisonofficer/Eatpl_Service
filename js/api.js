@@ -197,6 +197,25 @@ export function storeAmenities(s) {
   return p;
 }
 
+// ---------- 잇플 상세 '편의 서비스' (공식 주차 여부) — /api/facilities ----------
+// { parking: yes|no|null, wifi } — 매장 1곳 = 서버가 상세 페이지 1회 조회(1일 캐시). 목록·상세·필터가 이 값을 우선한다.
+const facCache = new Map();
+let facDisabled = false;
+export function storeFacilities(s) {
+  if (facDisabled || status.source === "mock" || status.fellBack || !s.url) return Promise.resolve(null);
+  if (facCache.has(s.id)) return facCache.get(s.id);
+  const p = slot()
+    .then(() => fetch(`/api/facilities?${new URLSearchParams({ url: s.url })}`))
+    .then((r) => {
+      if (r.status === 501) facDisabled = true;
+      return r.ok ? r.json() : null;
+    })
+    .catch(() => null)
+    .finally(release);
+  facCache.set(s.id, p);
+  return p;
+}
+
 // ---------- 검색어 → 좌표 (결과가 없을 때 지도 이동용) ----------
 const geoCache = new Map();
 export function geocode(q) {
