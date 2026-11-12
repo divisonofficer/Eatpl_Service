@@ -23,7 +23,7 @@ npm run e2e          # 모바일 e2e (서버 실행 중일 때)
 ```
 index.html            한 페이지 앱
 css/style.css         모바일(바텀시트) / 데스크톱(좌측 패널)
-js/app.js             UI: 지도·핀 겹침 정리·카드·잇플 모달·후보/공유·현위치·1차→2차
+js/app.js             UI: 지도·핀 겹침 정리·카드·잇플 새 탭·후보/공유·현위치·1차→2차
 js/api.js             데이터 계층 (live | mock | proxy), 사진·행정구역 조회
 js/modes.js           모드 4종(1차 회식·2차·점심 회식·야근 야식) 필터·정렬
 js/format.js          표기, 안내문 템플릿

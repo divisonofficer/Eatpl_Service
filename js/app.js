@@ -43,7 +43,7 @@ const inCand = (id) => state.candidates.some((c) => c.id === id);
 $("searchIc").innerHTML = svg("search", 20);
 $("locateBtn").innerHTML = svg("locate", 22);
 $("candIc").innerHTML = svg("share", 15);
-document.querySelectorAll("[data-close], #epClose, #inapp .icon-btn").forEach((b) => (b.innerHTML = svg("close", 20)));
+document.querySelectorAll("[data-close], #inapp .icon-btn").forEach((b) => (b.innerHTML = svg("close", 20)));
 
 // ---------- 지도 ----------
 const map = L.map("map", { zoomControl: false }).setView([37.57, 126.99], 14);
@@ -800,7 +800,7 @@ function pvCard(s) {
       </div>
       <span class="pv-go">${svg("chevron", 18)}</span>
     </div>
-    <button type="button" class="btn btn-primary btn-block" data-eatpl="${esc(s.id)}">잇플에서 자세히 보기 ${svg("chevron", 18)}</button>
+    <a class="btn btn-primary btn-block" data-eatpl="${esc(s.id)}" href="${esc(s.url)}" target="_blank" rel="noopener" referrerpolicy="strict-origin-when-cross-origin" aria-label="잇플에서 자세히 보기 (새 창)">잇플에서 자세히 보기 ${svg("chevron", 18)}</a>
     <div class="pv-actions">
       <a href="${esc(kakaoRoute(s))}" target="_blank" rel="noopener">${svg("route", 16)}<span>길찾기</span></a>
       <button type="button" data-add="${esc(s.id)}" class="${on ? "on" : ""}" ${!on && state.candidates.length >= CONFIG.maxCandidates ? "disabled" : ""}>${svg(on ? "check" : "plus", 16)}<span>${on ? "담김" : "담기"}</span></button>
@@ -849,11 +849,11 @@ $("pvTrack").addEventListener("scroll", () => {
 
 // 미리보기·상세·결정 화면 공통 버튼 처리
 function onAction(e) {
-  if (e.target.closest("a[data-eatpl]")) e.preventDefault();
+  // 잇플은 원본 URL로 브라우저가 직접 새 탭을 연다. 기본 링크 동작을 막지 않는다.
+  if (e.target.closest("a[data-eatpl]")) return;
   const t = e.target.closest("[data-eatpl],[data-add],[data-share-one],[data-next],[data-detail],[data-add-second],[data-rm],[data-tone]");
   if (!t) return;
   const d = t.dataset;
-  if (d.eatpl) return openEatpl(storeById(d.eatpl));
   if (d.add) return toggleCandidate(d.add);
   if (d.addSecond) return toggleCandidate(d.addSecond, "2차");
   if (d.rm) return toggleCandidate(d.rm);
@@ -946,7 +946,7 @@ function renderDetail(s, keepScroll = false) {
     </div>
     <div class="dt-bar">
       <button type="button" class="btn btn-ghost" data-add="${esc(s.id)}" ${!on && state.candidates.length >= CONFIG.maxCandidates ? "disabled" : ""}>${svg(on ? "check" : "plus", 18)} ${on ? "담김" : "담기"}</button>
-      <button type="button" class="btn btn-primary" data-eatpl="${esc(s.id)}">잇플에서 보기 ${svg("chevron", 18)}</button>
+      <a class="btn btn-primary" data-eatpl="${esc(s.id)}" href="${esc(s.url)}" target="_blank" rel="noopener" referrerpolicy="strict-origin-when-cross-origin" aria-label="잇플에서 보기 (새 창)">잇플에서 보기 ${svg("chevron", 18)}</a>
     </div>`;
   if (keepScroll) {
     $("detail").scrollTop = scroll;
@@ -1176,28 +1176,6 @@ async function resolveKakao(s) {
   const a = document.querySelector(`[data-kakao="${CSS.escape(s.id)}"]`);
   if (place && a) a.href = place.url;
 }
-
-// ---------- 잇플 상세 모달 (merUrl 원본 그대로) ----------
-let epTimer;
-function openEatpl(s) {
-  if (!s?.url) return;
-  $("epTitle").textContent = s.name;
-  $("epOpen").href = s.url;
-  $("epLoading").textContent = "불러오는 중…";
-  $("epLoading").hidden = false;
-  $("epFrame").src = s.url;
-  clearTimeout(epTimer);
-  epTimer = setTimeout(() => ($("epLoading").textContent = "안 보이면 '새 창'"), 8000);
-  $("eatplDialog").showModal();
-}
-$("epFrame").addEventListener("load", () => {
-  if ($("epFrame").src !== "about:blank") $("epLoading").hidden = true;
-});
-$("epClose").addEventListener("click", () => $("eatplDialog").close());
-$("eatplDialog").addEventListener("close", () => {
-  clearTimeout(epTimer);
-  $("epFrame").src = "about:blank";
-});
 
 function toast(msg) {
   const t = $("toast");

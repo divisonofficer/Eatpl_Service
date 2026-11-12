@@ -83,20 +83,6 @@
   <!-- 결정·공유 -->
   <dialog id="decide" class="page" aria-label="후보 결정"></dialog>
 
-  <!-- 잇플 상세 (merUrl 원본 iframe + 새 창) -->
-  <dialog id="eatplDialog" class="eatpl">
-    <div class="ep-head">
-      <div class="ep-title"><span class="ep-logo">eat.pl 잇플</span><strong id="epTitle"></strong></div>
-      <a id="epOpen" class="ep-open" target="_blank" rel="noopener">새 창</a>
-      <button type="button" id="epClose" class="icon-btn" aria-label="닫기"></button>
-    </div>
-    <div class="ep-body">
-      <div id="epLoading" class="ep-loading">불러오는 중…</div>
-      <iframe id="epFrame" title="잇플 상세" referrerpolicy="strict-origin-when-cross-origin"
-        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
-    </div>
-  </dialog>
-
   <div id="inapp" class="inapp" hidden>
     <a id="inappOpen" href="#">기본 브라우저로 열기</a>
     <button type="button" class="icon-btn" aria-label="닫기" onclick="this.parentElement.hidden=true"></button>

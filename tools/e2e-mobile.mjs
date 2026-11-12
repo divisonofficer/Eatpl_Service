@@ -63,14 +63,9 @@ await sleep(900);
 const after = await ev(`document.querySelector('.mk.is-active .mk-pop b')?.textContent`);
 check("swipeSync", before && after && before !== after, { before, after });
 
-// 4) 잇플 모달 = merUrl 원본
-await ev(`document.querySelector('.pv-card .btn-primary[data-eatpl]').click()`);
-await until(`document.getElementById('epLoading').hidden`, 15000);
-const ep = await ev(`({ open: document.getElementById('eatplDialog').open, src: document.getElementById('epFrame').getAttribute('src'), tab: document.getElementById('epOpen').href })`);
-check("eatplMerUrl", ep.open && /^https:\/\/web\.paybooc\.ai\/mer\/web\/profile\/[A-Za-z0-9_-]+$/.test(ep.src) && ep.src === ep.tab, ep.src);
-await shot("03-eatpl");
-await ev(`document.getElementById('epClose').click()`); await sleep(200);
-check("eatplClose", (await ev(`document.getElementById('epFrame').src`)) === "about:blank");
+// 4) 잇플은 원본 URL의 일반 새 탭 링크 (자동 방문으로 외부 집계를 오염시키지 않고 속성만 확인)
+const ep = await ev(`(() => { const a = document.querySelector('.pv-card a[data-eatpl]'); return { href: a.getAttribute('href'), original: window.__hp.state.stores.find(s => s.id === a.dataset.eatpl)?.url, target: a.target, rel: a.rel, policy: a.referrerPolicy, iframe: !!document.querySelector('iframe') }; })()`);
+check("eatplMerUrl", /^https:\/\/web\.paybooc\.ai\/mer\/web\/profile\/[A-Za-z0-9_-]+$/.test(ep.href) && ep.href === ep.original && ep.target === "_blank" && ep.rel === "noopener" && ep.policy === "strict-origin-when-cross-origin" && !ep.iframe, ep);
 
 // 5) 상세 → 후보 담기
 await ev(`document.querySelector('.pv-card [data-detail]').click()`); await sleep(1500); await shot("04-detail");

@@ -378,18 +378,6 @@ dialog.page { width: 100vw; height: 100dvh; max-width: 100vw; max-height: 100dvh
 .seg button[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: var(--shadow-sm); }
 #message { display: block; width: calc(100% - 32px); margin: 10px 16px 0; font: inherit; font-size: 14px; line-height: 1.55; border: 0; border-radius: 16px; padding: 14px; resize: none; background: var(--bg); color: var(--ink); }
 
-/* 잇플 상세 (iframe) */
-dialog.eatpl { width: min(520px, 100vw); height: min(860px, 92dvh); max-width: 100vw; max-height: 100dvh; display: none; flex-direction: column; overflow: hidden; border-radius: var(--r); }
-dialog.eatpl[open] { display: flex; }
-.ep-head { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 16px; border-bottom: 1px solid var(--line); }
-.ep-title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.ep-logo { font-size: 10px; color: var(--c); font-weight: 800; }
-.ep-title strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ep-open { font-size: 13px; font-weight: 600; color: var(--ink); text-decoration: none; border: 1px solid var(--line); border-radius: var(--pill); padding: 6px 12px; white-space: nowrap; }
-.ep-body { flex: 1; position: relative; min-height: 0; }
-.ep-body iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
-.ep-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
-
 .inapp { position: fixed; z-index: 30; left: 10px; right: 10px; bottom: calc(env(safe-area-inset-bottom) + 10px); background: var(--ink); color: #fff; border-radius: 14px; padding: 12px 44px 12px 14px; font-size: 14px; }
 .inapp a { color: #ffd8a8; font-weight: 700; }
 .inapp .icon-btn { position: absolute; right: 4px; top: 4px; color: #fff; }
@@ -398,7 +386,6 @@ dialog.eatpl[open] { display: flex; }
 /* ---------- 모바일 ---------- */
 @media (max-width: 899px) {
   .leaflet-control-zoom { display: none; }
-  dialog.eatpl { width: 100vw; height: 94dvh; margin: auto 0 0; border-radius: var(--r) var(--r) 0 0; }
 }
 
 /* ---------- 데스크톱: 좌측 패널 ---------- */
